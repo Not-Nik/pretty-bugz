@@ -1,285 +1,242 @@
 "use strict";
 
-// enter_bug.cgi (BugModal create form) as a step-by-step wizard: one slide per step,
-// a clickable stepper, Back/Next in a sticky bar, and a review slide before submitting.
+// enter_bug.cgi (BugModal create form) as one page: the essential sections first, optional
+// modules under "More fields", and a sticky rail with a section checklist, a live summary and
+// Submit. Nothing is hidden, so BMO's own validation and focus handling keep working.
 (() => {
   const { h, register } = globalThis.PrettyBugz;
 
   const byId = (id) => document.getElementById(id);
-  const TEXT_INPUT_TYPES = new Set(["text", "search", "email", "url", "number", "date", "datetime-local"]);
+  const clean = (text) => text.replace(/\s+/g, " ").trim();
 
-  function value(form, name) {
+  // Mirrors BMO's required-field check in bug_modal.js (`.save-btn` click handler).
+  function isMissing(form, control) {
+    if (control.matches(".buttons.toggle")) return !form.elements[control.id]?.value;
+    if (control instanceof HTMLSelectElement) return control.selectedIndex === -1;
+    if (control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement) return !control.value.trim();
+    return false;
+  }
+
+  function selectedText(form, name) {
     const control = form.elements[name];
     if (!control) return "";
-    if (control instanceof HTMLSelectElement && control.multiple) {
-      return [...control.selectedOptions].map((o) => o.text.trim()).join(", ");
-    }
     if (control instanceof HTMLSelectElement) {
-      return control.selectedIndex >= 0 ? control.options[control.selectedIndex].text.trim() : "";
+      return control.selectedIndex >= 0 ? clean(control.options[control.selectedIndex].text) : "";
     }
-    return String(control.value ?? "").trim();
+    return clean(String(control.value ?? ""));
   }
 
-  function isRequired(form, name) {
-    if (name === "bug_type") return byId("bug_type")?.getAttribute("aria-required") === "true";
-    return ["short_desc", "component", "version"].includes(name);
+  // Advanced fields BMO hides (e.g. Severity) shouldn't appear in the summary.
+  function isShown(form, name) {
+    const control = form.elements[name];
+    const node = control instanceof RadioNodeList ? control[0] : control;
+    return !!node && (node.type === "hidden" || node.closest(".field, .module")?.getClientRects().length > 0);
   }
 
-  function defineSteps(form) {
-    const summaryModule = byId("summary-container")?.closest("section.module");
+  function descriptionTemplate(form) {
+    try {
+      const templates = JSON.parse(form.dataset.descriptionTemplates ?? "[]");
+      const index = form.component?.type === "hidden" ? 0 : form.component?.selectedIndex ?? -1;
+      return templates[index] ?? "";
+    } catch {
+      return "";
+    }
+  }
+
+  function descriptionWritten(form) {
+    const text = form.comment?.value ?? "";
+    return /\S/.test(text) && text.trim() !== descriptionTemplate(form).trim();
+  }
+
+  function attachmentError(section) {
+    const message = section?.querySelector("#att-error-message");
+    return !!section?.querySelector('[aria-invalid="true"]') || (!!message && !message.hidden && !!clean(message.textContent));
+  }
+
+  function section(id, title, hint, body) {
+    return h(
+      "section",
+      { class: "pb-module pb-create-section", id, "aria-labelledby": `${id}-title` },
+      h("header", { class: "pb-module-header" },
+        h("h2", { class: "pb-module-title", id: `${id}-title`, text: title }),
+        hint ? h("span", { class: "pb-module-hint", text: hint }) : null),
+      body,
+    );
+  }
+
+  function buildLayout(form, changes) {
+    const toolbar = byId("page-toolbar");
+    const summary = byId("summary-container")?.closest("section.module");
     const categories = byId("module-categories");
-    const addComment = byId("add-comment");
     const attachment = byId("module-attachment");
     const security = byId("module-security");
-    const advanced = !!byId("toggle-advanced");
+    const addComment = byId("add-comment");
+    if (!summary || !categories || !addComment) return null;
 
-    const claimed = new Set([summaryModule, categories, attachment, security].filter(Boolean));
-    const extras = [...form.querySelectorAll(":scope > section.module")].filter((m) => !claimed.has(m));
-    const visibleExtras = extras.filter((m) => advanced || !m.classList.contains("expert_fields"));
+    const main = h("div", { class: "pb-create-main" });
+    const rail = h("aside", { class: "pb-create-rail", "aria-label": "New bug progress" });
+    const layout = h("div", { class: "pb-create" }, main, rail);
+    changes.insert(layout, form, toolbar?.nextSibling ?? summary);
 
-    return [
-      {
-        id: "summary",
-        label: "Summary",
-        title: "What’s the problem?",
-        hint: "Sum it up in one line. Possible duplicates show up below as you type.",
-        nodes: [summaryModule],
-        fields: ["short_desc"],
-        compact: true,
-      },
-      {
-        id: "category",
-        label: "Category",
-        title: "Where does it belong?",
-        hint: "Pick the component that best matches, then the version and type.",
-        nodes: [categories],
-        fields: ["component", "version", "bug_type"],
-        compact: true,
-      },
-      {
-        id: "description",
-        label: "Description",
-        title: "Tell us more",
-        hint: "What did you do, what happened, and what did you expect instead?",
-        nodes: [addComment],
-        fields: ["comment"],
-        wrap: true,
-      },
-      {
-        id: "attachments",
-        label: "Attachments",
-        title: "Attachments & security",
-        hint: "Add a screenshot, log or test case, and flag security-sensitive problems.",
-        nodes: [attachment, security],
-        fields: [],
-      },
-      visibleExtras.length && {
-        id: "details",
-        label: "Details",
-        title: "Optional details",
-        hint: "Everything here can stay as it is — triagers usually fill these in.",
-        nodes: extras,
-        fields: [],
-        optional: true,
-      },
-      {
-        id: "review",
-        label: "Review",
-        title: "Review & submit",
-        hint: "Check everything looks right. Click any section to change it.",
-        nodes: [],
-        fields: [],
-        review: true,
-      },
-    ].filter((step) => step && (step.review || step.nodes.some(Boolean)));
-  }
+    // Anything BMO or its extensions put above the first module (notices, custom-form hints) stays on top.
+    const children = [...form.children].filter((node) => node !== layout && node !== toolbar);
+    const summaryIndex = children.indexOf(summary);
+    const isContent = (node) => !node.matches("script, style, input[type=hidden], #new-comment-actions, #bottom-actions, #add-comment");
+    for (const node of children.slice(0, Math.max(summaryIndex, 0)).filter(isContent)) {
+      if (node.compareDocumentPosition(layout) & Node.DOCUMENT_POSITION_PRECEDING) changes.move(node, main);
+    }
 
-  function reviewRows(form) {
-    const file = form.elements.data?.files?.[0];
-    const security = [...(byId("module-security")?.querySelectorAll('input[type="checkbox"]:checked') ?? [])]
-      .map((box) => box.closest("label, div")?.textContent.trim() || box.name);
-    const platform = [value(form, "rep_platform"), value(form, "op_sys")].filter(Boolean).join(" / ");
+    const descriptionBody = h("div", { class: "pb-module-body" });
+    const description = section("pb-create-description", "Description", "What you did, what happened, and what you expected instead", descriptionBody);
 
-    return [
-      { step: "summary", label: "Summary", text: value(form, "short_desc"), required: true },
-      { step: "category", label: "Product", text: [value(form, "product"), value(form, "component")].filter(Boolean).join(" › "), required: true },
-      { step: "category", label: "Type", text: value(form, "bug_type"), required: isRequired(form, "bug_type") },
-      { step: "category", label: "Version", text: value(form, "version"), required: true },
-      form.elements.rep_platform && { step: "category", label: "Platform", text: platform },
-      form.elements.bug_severity && { step: "category", label: "Severity", text: value(form, "bug_severity") },
-      { step: "description", label: "Description", text: value(form, "comment"), long: true, empty: "No description yet" },
-      { step: "attachments", label: "Attachment", text: file ? `${file.name}${value(form, "description") ? ` — ${value(form, "description")}` : ""}` : "", empty: "None" },
-      byId("module-security") && { step: "attachments", label: "Visibility", text: security.length ? security.join("; ") : "Public", },
+    const primary = [
+      { id: "summary", label: "Summary", node: summary },
+      { id: "category", label: "Category", node: categories },
+      { id: "description", label: "Description", node: description, recommended: true },
+      attachment && { id: "attachment", label: "Attachment", node: attachment, optional: true },
+      security && { id: "security", label: "Security", node: security, optional: true },
     ].filter(Boolean);
+
+    for (const item of primary) {
+      if (item.node === description) main.append(description);
+      else changes.move(item.node, main);
+    }
+    changes.move(addComment, descriptionBody);
+
+    const claimed = new Set(primary.map((item) => item.node));
+    const extras = children.slice(summaryIndex + 1).filter((node) => isContent(node) && !claimed.has(node));
+    const moreBody = h("div", { class: "pb-create-more-body" });
+    const moreHeader = h("header", { class: "pb-create-more-header" },
+      h("div", {},
+        h("h2", { id: "pb-create-more-title", text: "More fields" }),
+        h("p", { text: "Status, people, references, flags and other details. Everything here is optional." })));
+    const more = h("section", { class: "pb-create-more", id: "pb-create-more", "aria-labelledby": "pb-create-more-title" }, moreHeader, moreBody);
+    main.append(more);
+    const toggle = byId("toggle-advanced");
+    if (toggle) changes.move(toggle, moreHeader);
+    for (const node of extras) changes.move(node, moreBody);
+
+    return { main, rail, more, sections: [...primary, { id: "more", label: "More fields", node: more, optional: true }] };
   }
 
-  function buildWizard(form, changes) {
-    const steps = defineSteps(form);
-    const firstNode = steps.flatMap((s) => s.nodes).find(Boolean);
-    if (!firstNode) return;
+  function buildRail(form, rail, sections, changes) {
+    const product = selectedText(form, "product") || form.querySelector('input[name="product"]')?.value || "";
 
-    let current = 0;
-    const visited = new Set([0]);
-
-    const stepper = h("ol", { class: "pb-stepper", "aria-label": "Steps" });
-    const slides = h("div", { class: "pb-slides" });
-    const wizard = h("div", { class: "pb-wizard" }, h("nav", { class: "pb-stepper-nav" }, stepper), slides);
-    changes.insert(wizard, firstNode.parentNode, firstNode);
-
-    for (const [index, step] of steps.entries()) {
-      step.button = h(
-        "button",
-        { type: "button", class: "pb-step", "data-step": step.id, onclick: () => go(index) },
-        h("span", { class: "pb-step-num", text: String(index + 1) }),
-        h("span", { class: "pb-step-label", text: step.label }),
-      );
-      stepper.append(h("li", {}, step.button));
-
-      step.body = h("div", { class: "pb-slide-body" });
-      step.slide = h(
-        "section",
-        { class: `pb-slide${step.compact ? " pb-compact" : ""}`, "data-step": step.id, "aria-labelledby": `pb-slide-${step.id}-title` },
-        h(
-          "header",
-          { class: "pb-slide-header" },
-          h("span", { class: "pb-slide-kicker", text: `Step ${index + 1} of ${steps.length}${step.optional ? " · optional" : ""}` }),
-          h("h2", { class: "pb-slide-title", id: `pb-slide-${step.id}-title`, text: step.title }),
-          h("p", { class: "pb-slide-hint", text: step.hint }),
-        ),
-        step.body,
-      );
-      slides.append(step.slide);
-
-      let target = step.body;
-      if (step.wrap) {
-        target = h("div", { class: "pb-module-body" });
-        step.body.append(h("div", { class: "pb-module" }, target));
-      }
-      for (const node of step.nodes) {
-        if (node) changes.move(node, target);
-      }
+    const checklist = h("ol", { class: "pb-create-checklist" });
+    for (const item of sections) {
+      item.status = h("span", { class: "pb-create-status", "aria-hidden": "true" });
+      item.note = h("span", { class: "pb-create-note" });
+      item.button = h("button", { type: "button", class: "pb-create-step" }, item.status, h("span", { class: "pb-create-label", text: item.label }), item.note);
+      item.button.addEventListener("click", () => {
+        item.node.scrollIntoView({ behavior: "smooth", block: "start" });
+        const first = item.node.querySelector("input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [role=radiogroup]");
+        first?.focus({ preventScroll: true });
+      });
+      checklist.append(h("li", {}, item.button));
     }
 
-    const reviewStep = steps.find((s) => s.review);
-    const reviewList = h("dl", { class: "pb-review" });
-    reviewStep.body.append(h("div", { class: "pb-module" }, h("div", { class: "pb-module-body" }, reviewList)));
+    const progress = h("p", { class: "pb-create-progress", "aria-live": "polite" });
+    const facts = h("dl", { class: "pb-create-facts" });
+    const actions = h("div", { class: "pb-create-actions" });
 
-    const backButton = h("button", { type: "button", class: "secondary pb-back", text: "← Back", onclick: () => go(current - 1) });
-    const nextButton = h("button", { type: "button", class: "pb-next", onclick: () => next() });
-    const position = h("span", { class: "pb-position" });
-    const end = h("div", { class: "pb-actionbar-end" }, nextButton);
-    const bar = h(
-      "div",
-      { class: "pb-actionbar pb-wizard-bar", role: "toolbar", "aria-label": "Bug form navigation" },
-      h("div", { class: "pb-actionbar-start" }, backButton, position),
-      end,
+    rail.append(
+      h("div", { class: "pb-create-card" },
+        h("p", { class: "pb-create-kicker", text: "New bug" }),
+        h("h2", { class: "pb-create-product", text: product }),
+        checklist,
+        progress,
+        facts,
+        actions),
     );
-    changes.insert(bar, form);
 
+    // #commit stays the first submit button in the form, so Enter in a text field still files the bug.
     const commit = byId("commit");
-    if (commit) changes.move(commit, end);
-    const makeTemplate = byId("make-template");
-    if (makeTemplate) changes.move(makeTemplate, reviewStep.body);
+    const template = byId("make-template");
+    if (commit) changes.move(commit, actions);
+    if (template) changes.move(template, actions);
 
-    if (byId("toggle-advanced")) changes.addClass(form, "show-advanced-fields");
+    return { progress, facts };
+  }
 
-    const missing = (step) => step.fields.filter((name) => isRequired(form, name) && !value(form, name));
-    const complete = (step, index) => {
-      if (step.review) return false;
-      if (!step.fields.length) return visited.has(index);
-      return missing(step).length === 0 && (step.id !== "description" || !!value(form, "comment"));
-    };
+  function wire(form, layout, rail, changes) {
+    const { sections } = layout;
+    const { progress, facts } = rail;
+    let attempted = false;
 
-    function renderReview() {
-      reviewList.replaceChildren(
-        ...reviewRows(form).flatMap((row) => {
-          const missingValue = !row.text;
-          const index = steps.findIndex((s) => s.id === row.step);
-          return [
-            h("dt", {}, h("button", { type: "button", class: "pb-review-edit", text: row.label, title: `Edit ${row.label.toLowerCase()}`, onclick: () => go(index) })),
-            h(
-              "dd",
-              { class: [row.long && "pb-review-long", missingValue && (row.required ? "pb-review-missing" : "pb-review-empty")].filter(Boolean).join(" ") },
-              missingValue ? (row.required ? "Required" : row.empty ?? "—") : row.long && row.text.length > 700 ? `${row.text.slice(0, 700)}…` : row.text,
-            ),
-          ];
-        }),
-      );
-    }
+    const requiredIn = (node) => [...node.querySelectorAll('[aria-required="true"]')].filter((control) => !control.closest("[hidden], .bz_default_hidden"));
 
     function render() {
-      for (const [index, step] of steps.entries()) {
-        const active = index === current;
-        step.slide.classList.toggle("pb-active", active);
-        step.button.classList.toggle("pb-current", active);
-        step.button.classList.toggle("pb-done", !active && complete(step, index));
-        step.button.classList.toggle("pb-invalid", !active && visited.has(index) && missing(step).length > 0);
-        if (active) step.button.setAttribute("aria-current", "step");
-        else step.button.removeAttribute("aria-current");
+      let missingTotal = 0;
+      for (const item of sections) {
+        const required = requiredIn(item.node);
+        const missing = required.filter((control) => isMissing(form, control));
+        const invalid = attempted && (missing.length > 0 || (item.id === "attachment" && attachmentError(item.node)));
+        missingTotal += missing.length;
+
+        let state = "optional";
+        let note = "Optional";
+        if (item.recommended) {
+          const written = descriptionWritten(form);
+          state = written ? "done" : "todo";
+          note = written ? "" : "Recommended";
+        } else if (required.length) {
+          state = missing.length ? "todo" : "done";
+          note = missing.length ? `${missing.length} required` : "";
+        }
+        if (invalid) state = "invalid";
+        item.button.dataset.state = state;
+        item.note.textContent = note;
       }
-      const last = current === steps.length - 1;
-      backButton.disabled = current === 0;
-      position.textContent = `Step ${current + 1} of ${steps.length}`;
-      nextButton.hidden = last;
-      nextButton.textContent = `${steps[current + 1]?.optional ? "Continue" : "Next"}: ${steps[current + 1]?.label ?? ""} →`;
-      wizard.dataset.step = steps[current].id;
-      bar.classList.toggle("pb-final", last);
-      if (steps[current].review) renderReview();
+
+      progress.textContent = missingTotal
+        ? `${missingTotal} required ${missingTotal === 1 ? "field" : "fields"} left`
+        : "Ready to submit";
+      progress.dataset.state = missingTotal ? "todo" : "done";
+
+      const rows = [
+        ["component", "Component"],
+        ["bug_type", "Type"],
+        ["version", "Version"],
+        ["bug_severity", "Severity"],
+      ].map(([name, label]) => [name, selectedText(form, name), label]).filter(([name, value]) => value && value !== "--" && value !== "---" && isShown(form, name));
+      facts.replaceChildren(...rows.flatMap(([, value, label]) => [h("dt", { text: label }), h("dd", { text: value })]));
     }
-
-    function go(index, { focus = true } = {}) {
-      if (index < 0 || index >= steps.length || index === current) return;
-      wizard.dataset.direction = index > current ? "forward" : "back";
-      current = index;
-      visited.add(index);
-      render();
-      const top = wizard.getBoundingClientRect().top;
-      if (top < 0) window.scrollBy({ top: top - 80, behavior: "smooth" });
-      if (focus) {
-        const first = steps[index].slide.querySelector(
-          "input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [role=radiogroup]",
-        );
-        first?.focus({ preventScroll: true });
-      }
-    }
-
-    function next() {
-      const [name] = missing(steps[current]);
-      if (name) {
-        const control = form.elements[name];
-        const target = control instanceof RadioNodeList ? byId(name) : control;
-        target?.focus();
-        target?.closest(".field")?.classList.add("pb-attention");
-        setTimeout(() => target?.closest(".field")?.classList.remove("pb-attention"), 900);
-        return;
-      }
-      go(current + 1);
-    }
-
-    const stepOf = (node) => steps.findIndex((s) => s.slide.contains(node));
-
-    // BMO focuses the first invalid field on submit; follow it to its slide.
-    changes.listen(form, "focusin", (event) => {
-      const index = stepOf(event.target);
-      if (index >= 0 && index !== current) go(index, { focus: false });
-    });
-    changes.listen(form, "invalid", (event) => {
-      const index = stepOf(event.target);
-      if (index >= 0) go(index, { focus: false });
-    }, true);
-
-    // Enter in a one-line field should advance, not submit the half-filled form.
-    changes.listen(form, "keydown", (event) => {
-      const target = event.target;
-      if (event.key !== "Enter" || event.defaultPrevented || event.isComposing) return;
-      if (!(target instanceof HTMLInputElement) || !TEXT_INPUT_TYPES.has(target.type)) return;
-      if (current === steps.length - 1) return;
-      event.preventDefault();
-      next();
-    });
 
     changes.listen(form, "input", render);
     changes.listen(form, "change", render);
+
+    // BMO validates on click and scrolls to missing fields itself; afterwards we only mark the
+    // checklist and surface attachment errors, which BMO shows without moving focus.
+    const commit = byId("commit");
+    if (commit) {
+      changes.listen(commit, "click", () => {
+        attempted = true;
+        setTimeout(() => {
+          render();
+          const attachment = sections.find((item) => item.id === "attachment");
+          const missing = sections.some((item) => requiredIn(item.node).some((control) => isMissing(form, control)));
+          if (!missing && attachment && attachmentError(attachment.node)) {
+            attachment.node.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      });
+    }
+
+    // Component changes rewrite the description template and other fields from BMO's handler.
+    changes.observe(form, render, { attributes: true, attributeFilter: ["aria-invalid", "hidden", "class"], subtree: true });
+
+    const visible = new Map();
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) visible.set(entry.target, entry.intersectionRatio);
+      const current = sections.find((item) => (visible.get(item.node) ?? 0) > 0);
+      for (const item of sections) {
+        if (item === current) item.button.setAttribute("aria-current", "true");
+        else item.button.removeAttribute("aria-current");
+      }
+    }, { rootMargin: "-120px 0px -55% 0px", threshold: [0, 0.01] });
+    for (const item of sections) observer.observe(item.node);
+    changes.defer(() => observer.disconnect());
+
     render();
   }
 
@@ -291,8 +248,11 @@
     },
 
     apply(changes) {
+      const form = byId("changeform");
+      const layout = buildLayout(form, changes);
+      if (!layout) return;
       changes.addClass(document.body, "pb-enter-bug");
-      buildWizard(byId("changeform"), changes);
+      wire(form, layout, buildRail(form, layout.rail, layout.sections, changes), changes);
     },
   });
 })();

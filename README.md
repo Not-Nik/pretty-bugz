@@ -16,7 +16,7 @@ A Firefox extension that gives [bugzilla.mozilla.org](https://bugzilla.mozilla.o
 
 | Page | What changes |
 | --- | --- |
-| `enter_bug.cgi` | A step-by-step wizard: Summary → Category → Description → Attachments & security → Optional details → Review |
+| `enter_bug.cgi` | One page: essentials first (Summary, Category, Description, Attachment, Security), optional modules under "More fields", and a sticky rail with a section checklist, live summary and Submit |
 | `enter_bug.cgi` product chooser, `describecomponents.cgi` | Big search box, a grid of product cards you can click anywhere on |
 | `buglist.cgi` | Result count and search chips, sticky toolbar, instant row filter, Export/Save menus, `j`/`k`/`o`/`/` shortcuts |
 | `query.cgi?format=advanced` | Grouped cards, filter boxes for long lists, "N active" badges, sticky search bar |

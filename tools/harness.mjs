@@ -49,7 +49,7 @@ const PAGES = [
 const SCREENSHOTS = [
   { out: "1-buglist.png", fixture: "buglist.html", extra: "buglist-select.js" },
   { out: "2-bug-dark.png", fixture: "bug.html", theme: "dark" },
-  { out: "3-new-bug-wizard.png", fixture: "enter-bug.mock.html", extra: "wizard-category.js" },
+  { out: "3-new-bug.png", fixture: "enter-bug.mock.html", extra: "enter-bug-filled.js" },
   { out: "4-attention.png", fixture: "page-attention.html", query: "?id=attention.html" },
   { out: "5-advanced-search.png", fixture: "query-advanced.html" },
   { out: "6-components-dark.png", fixture: "components.html", theme: "dark" },

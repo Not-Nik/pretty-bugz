@@ -8,7 +8,7 @@ Copy these fields into the AMO Developer Hub when submitting a new version.
 - **Add-on URL slug:** `pretty-bugz`
 - **Summary** (max 250 characters):
 
-  > A modern theme and redesigned, more usable layouts for bugzilla.mozilla.org: cleaner bug pages, a step-by-step new-bug wizard, filterable bug lists, a triage dashboard and dark mode.
+  > A modern theme and redesigned, more usable layouts for bugzilla.mozilla.org: cleaner bug pages, a streamlined new-bug form, filterable bug lists, a triage dashboard and dark mode.
 
 - **Categories (Firefox):** Appearance, Other
 - **Tags:** bugzilla, mozilla, developer tools, dark mode, productivity, theme
@@ -31,7 +31,7 @@ Pretty Bugz gives bugzilla.mozilla.org a clean, modern look and rebuilds its bus
 - Readable comments, status pills and tidy form controls on every bug
 
 **Redesigned pages** (can be turned off separately)
-- **File a bug:** a step-by-step wizard with one step per slide, duplicate suggestions, and a review screen before you submit
+- **File a bug:** the essentials on one page, optional fields tucked under "More fields", and a sticky checklist that shows what's still required next to the Submit button
 - **Bug lists:** result count and search terms up top, a sticky toolbar, instant row filtering, Export and Save menus, and j/k keyboard navigation
 - **Advanced search:** grouped cards, filter boxes for long product and component lists, "N active" badges and a sticky search bar
 - **What needs my attention:** a triage dashboard with counts per list, priority tiers and collapsed empty lists
@@ -51,7 +51,7 @@ Upload in this order from `store/screenshots/` (1280×800):
 | --- | --- |
 | `1-buglist.png` | Bug lists with search chips, a sticky toolbar, instant filtering and keyboard navigation |
 | `2-bug-dark.png` | Bug pages in dark mode |
-| `3-new-bug-wizard.png` | Filing a bug as a step-by-step wizard |
+| `3-new-bug.png` | Filing a bug with a live checklist and summary |
 | `4-attention.png` | "What needs my attention" as a triage dashboard |
 | `5-advanced-search.png` | Advanced search with grouped sections and filterable lists |
 | `6-components-dark.png` | Browsing a product's components |
@@ -83,7 +83,7 @@ The listing icon is `store/icon-128.png` (the extension itself ships `icons/icon
   turns layouts off.
 - To test: install, open https://bugzilla.mozilla.org/buglist.cgi?quicksearch=tabs or any bug,
   and use the toolbar popup to switch the theme, layouts and appearance.
-  The new-bug wizard needs a BMO login (https://bugzilla.mozilla.org/enter_bug.cgi?product=Firefox).
+  The new-bug form needs a BMO login (https://bugzilla.mozilla.org/enter_bug.cgi?product=Firefox).
 ```
 
 ## Release checklist

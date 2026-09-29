@@ -6,7 +6,8 @@
 </head><body>
 <div id="wrapper"><header id="header"><div class="inner"><h1 id="header-title" class="title"><a class="header-button" href="/home"><span>Bugzilla</span></a></h1></div></header>
 <main id="bugzilla-body"><div id="main-inner">
-<form name="changeform" id="changeform" class="enter_bug_form" method="post" action="post_bug.cgi">
+<form name="changeform" id="changeform" class="enter_bug_form" method="post" action="post_bug.cgi"
+      data-description-templates="[&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;Steps to reproduce:\n\nActual results:\n\nExpected results:\n&quot;,&quot;&quot;]">
 <input type="hidden" name="filed_via" value="standard_form">
 <input type="hidden" name="product" value="Firefox">
 <div role="toolbar" id="page-toolbar"><h2>File a New Bug</h2>
@@ -15,6 +16,7 @@
     <button type="button" id="toggle-advanced" class="secondary" data-show="Hide Advanced Fields" data-hide="Show Advanced Fields">Show Advanced Fields</button>
     <a href="#"><button type="button" class="secondary">Use Guided Form</button></a>
   </div></div>
+<div id="custom_form_list">Looking to file something other than a bug? Try one of the <a href="#">custom bug entry forms</a>.</div>
 <section class="module"><div class="module-content"><div id="summary-container">
   <div class="field" id="field-short_desc"><div class="name"><span class="required_star edit-show" aria-label="Required Field">*</span> <a href="#" class="help">Summary:</a></div><div class="value"><input type="text" id="short_desc" name="short_desc" aria-required="true" style="width:100%"></div></div>
   <div class="field bz_default_hidden" id="possible_duplicates_container"><div class="name">Possible Duplicates:</div><div class="value"><div id="possible_duplicates"></div></div></div>
