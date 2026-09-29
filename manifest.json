@@ -35,10 +35,18 @@
         "https://bugzilla.mozilla.org/*"
       ],
       "css": [
-        "content/theme.css"
+        "content/theme.css",
+        "content/layouts.css",
+        "content/layouts/enter-bug.css",
+        "content/layouts/buglist.css",
+        "content/layouts/simple-search.css"
       ],
       "js": [
         "content/lib.js",
+        "content/layouts/query.js",
+        "content/layouts/enter-bug.js",
+        "content/layouts/buglist.js",
+        "content/layouts/simple-search.js",
         "content/content.js"
       ],
       "run_at": "document_start"
