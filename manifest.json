@@ -39,14 +39,24 @@
         "content/layouts.css",
         "content/layouts/enter-bug.css",
         "content/layouts/buglist.css",
-        "content/layouts/simple-search.css"
+        "content/layouts/requests.css",
+        "content/layouts/components.css",
+        "content/layouts/simple-search.css",
+        "content/layouts/profile.css",
+        "content/layouts/activity.css",
+        "content/layouts/keywords.css"
       ],
       "js": [
         "content/lib.js",
         "content/layouts/query.js",
         "content/layouts/enter-bug.js",
         "content/layouts/buglist.js",
+        "content/layouts/requests.js",
+        "content/layouts/components.js",
         "content/layouts/simple-search.js",
+        "content/layouts/profile.js",
+        "content/layouts/activity.js",
+        "content/layouts/keywords.js",
         "content/content.js"
       ],
       "run_at": "document_start"
