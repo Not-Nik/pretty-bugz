@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Enter Bug: Firefox</title>
+<link href="/static/v20260925.1/skins/standard/global.css" rel="stylesheet">
+<link href="/static/v20260925.1/extensions/BugModal/web/bug_modal.css" rel="stylesheet">
+<link href="/static/v20260925.1/skins/standard/create_bug.css" rel="stylesheet">
+</head><body>
+<div id="wrapper"><header id="header"><div class="inner"><h1 id="header-title" class="title"><a class="header-button" href="/home"><span>Bugzilla</span></a></h1></div></header>
+<main id="bugzilla-body"><div id="main-inner">
+<form name="changeform" id="changeform" class="enter_bug_form" method="post" action="post_bug.cgi">
+<input type="hidden" name="filed_via" value="standard_form">
+<input type="hidden" name="product" value="Firefox">
+<div role="toolbar" id="page-toolbar"><h2>File a New Bug</h2>
+  <div role="group" class="buttons">
+    <button type="button" id="add-comment-btn" class="secondary">Add Description &darr;</button>
+    <button type="button" id="toggle-advanced" class="secondary" data-show="Hide Advanced Fields" data-hide="Show Advanced Fields">Show Advanced Fields</button>
+    <a href="#"><button type="button" class="secondary">Use Guided Form</button></a>
+  </div></div>
+<section class="module"><div class="module-content"><div id="summary-container">
+  <div class="field" id="field-short_desc"><div class="name"><span class="required_star edit-show" aria-label="Required Field">*</span> <a href="#" class="help">Summary:</a></div><div class="value"><input type="text" id="short_desc" name="short_desc" aria-required="true" style="width:100%"></div></div>
+  <div class="field bz_default_hidden" id="possible_duplicates_container"><div class="name">Possible Duplicates:</div><div class="value"><div id="possible_duplicates"></div></div></div>
+</div></div></section>
+<section class="module" id="module-categories"><header id="module-categories-header" class="module-header"><div class="module-latch"><div class="module-spinner" role="button" aria-expanded="true"></div><h2 class="module-title">Categories</h2></div></header>
+<div class="module-content" id="module-categories-content">
+ <div class="fields-lhs">
+  <div class="field" id="field-product"><div class="name">Product:</div><div class="value">Firefox</div></div>
+  <div class="field" id="field-component"><div class="name">Component:</div><div class="value"><div id="component-selection"><select id="component" name="component" size="7" aria-required="true"><option>Address Bar</option><option>Bookmarks &amp; History</option><option>General</option><option>Menus</option><option>New Tab Page</option><option>Tabbed Browser</option><option>Toolbars</option></select><div id="component-description"></div></div><div id="component-tip">Not sure which component to choose? Use the <a href="#">Guided Bug Form</a>.</div></div></div>
+  <div class="field" id="field-version"><div class="name">Version:</div><div class="value"><select id="version" name="version" aria-required="true"><option>unspecified</option><option selected>Firefox 143</option></select></div></div>
+  <div class="field expert_fields" id="field-platform"><div class="name">Platform:</div><div class="value" id="field-value-platform"><select id="rep_platform" name="rep_platform"><option>All</option><option selected>ARM64</option></select> <select id="op_sys" name="op_sys"><option>All</option><option selected>macOS</option></select> <button type="button" id="use-my-platform" class="secondary inline">My Platform</button> <button type="button" id="use-all-platforms" class="secondary inline">All Platforms</button></div></div>
+ </div>
+ <div class="fields-rhs">
+  <div class="field contains-buttons" id="field-bug_type"><div class="name">Type:</div><div class="value"><div role="radiogroup" class="buttons toggle" id="bug_type" tabindex="0" aria-required="true">
+    <div class="item"><input id="v1_bug_type" type="radio" name="bug_type" value="defect"><label for="v1_bug_type"><span class="bug-type-label iconic-text" data-type="defect"><span class="icon" aria-hidden="true"></span>defect</span></label></div>
+    <div class="item"><input id="v2_bug_type" type="radio" name="bug_type" value="enhancement"><label for="v2_bug_type"><span class="bug-type-label iconic-text" data-type="enhancement"><span class="icon" aria-hidden="true"></span>enhancement</span></label></div>
+    <div class="item"><input id="v3_bug_type" type="radio" name="bug_type" value="task"><label for="v3_bug_type"><span class="bug-type-label iconic-text" data-type="task"><span class="icon" aria-hidden="true"></span>task</span></label></div>
+  </div></div></div>
+  <div class="field expert_fields" id="field-importance"><div class="container"><div class="field inline"><div class="name">Severity:</div><div class="value"><select id="bug_severity" name="bug_severity"><option>--</option><option>S1</option><option>S2</option><option selected>S3</option><option>S4</option></select></div></div></div></div>
+ </div>
+</div></section>
+<section class="module expert_fields" id="module-tracking"><header class="module-header"><div class="module-latch"><div class="module-spinner"></div><h2 class="module-title">Tracking</h2></div></header><div class="module-content"><div class="fields-lhs"><div class="field"><div class="name">Status:</div><div class="value"><select name="bug_status"><option>UNCONFIRMED</option><option selected>NEW</option></select></div></div></div></div></section>
+<section class="module expert_fields" id="module-people"><header class="module-header"><div class="module-latch"><div class="module-spinner"></div><h2 class="module-title">People</h2></div></header><div class="module-content"><div class="fields-lhs"><div class="field"><div class="name">Assignee:</div><div class="value"><input type="text" name="assigned_to" id="assigned_to"></div></div></div><div class="fields-rhs"><div class="field"><div class="name">CC:</div><div class="value"><input type="text" name="cc" id="cc"></div></div></div></div></section>
+<section class="module expert_fields" id="module-references"><header class="module-header"><div class="module-latch"><div class="module-spinner"></div><h2 class="module-title">References</h2></div></header><div class="module-content"><div class="fields-lhs"><div class="field"><div class="name">Depends on:</div><div class="value"><input type="text" name="dependson" id="dependson"></div></div></div></div></section>
+<section class="module" id="module-security"><header class="module-header"><div class="module-latch"><div class="module-spinner"></div><h2 class="module-title">Security</h2></div></header><div class="module-content"><div class="groups edit-show"><div><input type="checkbox" name="groups" value="firefox-core-security" id="group_1"><label for="group_1">Many users could be harmed by this security problem: it should be kept hidden from the public until it is resolved</label></div></div></div></section>
+<section class="module" id="module-attachment"><header class="module-header"><div class="module-latch"><div class="module-spinner"></div><h2 class="module-title">Attachment</h2></div></header><div class="module-content"><div id="attach-file-action-outer"><button type="button" id="attach-new-file" class="secondary">Attach New File</button></div><div id="attach-file-content-outer" hidden><input type="file" name="data" id="data"><input type="text" name="description" id="description"><button type="button" id="attach-no-file" class="secondary">Don’t Attach File</button></div></div></section>
+<div id="add-comment"><textarea id="comment" name="comment" rows="5" cols="80" aria-label="Description" style="width:100%"></textarea><div id="after-comment-commit-button"></div></div>
+<div id="new-comment-actions">
+  <button type="submit" id="commit" class="save-btn primary">Submit Bug</button>
+</div>
+<div id="bottom-actions"><div id="bottom-right-actions">
+  <button type="submit" name="maketemplate" id="make-template" class="secondary expert_fields">Remember values as bookmarkable template</button>
+  <button type="button" id="top-btn" class="secondary">Top &uarr;</button>
+</div></div>
+</form>
+<div id="guided"><a href="#">Switch to the Bugzilla Helper</a> | <a href="#">Custom bug entry forms</a></div>
+</div></main></div>
+</body></html>

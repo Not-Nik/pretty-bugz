@@ -1,0 +1,27 @@
+{
+  "name": "pretty-bugz",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A cleaner, more modern look and more usable layouts for bugzilla.mozilla.org.",
+  "license": "MPL-2.0",
+  "homepage": "https://github.com/Not-Nik/pretty-bugz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Not-Nik/pretty-bugz.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Not-Nik/pretty-bugz/issues"
+  },
+  "scripts": {
+    "start": "web-ext run --start-url https://bugzilla.mozilla.org/show_bug.cgi?id=1000000",
+    "lint": "web-ext lint",
+    "check": "node tools/check.mjs",
+    "build": "web-ext build --overwrite-dest",
+    "fixtures": "node tools/harness.mjs fetch",
+    "test": "node tools/harness.mjs undo-all",
+    "screenshots": "node tools/harness.mjs screenshots"
+  },
+  "devDependencies": {
+    "web-ext": "^10.7.0"
+  }
+}
