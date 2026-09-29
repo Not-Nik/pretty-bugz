@@ -1,0 +1,786 @@
+/*
+ * Pretty Bugz theme for bugzilla.mozilla.org.
+ * Everything is scoped to :root.pb-on so the popup can toggle it live, and
+ * mostly works by overriding BMO's own CSS custom properties.
+ */
+
+/* Palette */
+
+:root.pb-on {
+  color-scheme: light dark;
+
+  --pb-bg: light-dark(#f4f5f7, #0d1117);
+  --pb-surface: light-dark(#ffffff, #161b22);
+  --pb-surface-2: light-dark(#f8f9fb, #1b2129);
+  --pb-surface-3: light-dark(#eef0f3, #232a33);
+  --pb-border: light-dark(#e2e5e9, #2a313b);
+  --pb-border-strong: light-dark(#cdd2d8, #3a424d);
+  --pb-text: light-dark(#1b1f24, #e6e9ed);
+  --pb-text-2: light-dark(#57606a, #9da7b3);
+  --pb-text-3: light-dark(#848d97, #6e7781);
+  --pb-accent: light-dark(#0060df, #3d8bfd);
+  --pb-accent-hover: light-dark(#0250bb, #5a9cff);
+  --pb-accent-pressed: light-dark(#054096, #2f74e0);
+  --pb-accent-soft: color-mix(in srgb, var(--pb-accent) 14%, transparent);
+  --pb-link: light-dark(#0060df, #6ea8fe);
+  --pb-link-hover: light-dark(#0250bb, #9ec5fe);
+  --pb-link-visited: light-dark(#6e3fd1, #b69cff);
+  --pb-danger: light-dark(#cf222e, #ff7b72);
+  --pb-danger-soft: color-mix(in srgb, var(--pb-danger) 14%, transparent);
+  --pb-success: light-dark(#1a7f37, #3fb950);
+  --pb-success-soft: color-mix(in srgb, var(--pb-success) 14%, transparent);
+  --pb-warning-bg: light-dark(#fff8c5, #2e2608);
+  --pb-warning-border: light-dark(#e3cf6f, #6b5413);
+  --pb-header-bg: light-dark(rgb(255 255 255 / .82), rgb(13 17 23 / .78));
+  --pb-shadow-color: light-dark(rgb(16 24 40 / .06), rgb(0 0 0 / .35));
+  --pb-shadow: 0 1px 2px var(--pb-shadow-color), 0 1px 3px var(--pb-shadow-color);
+  --pb-shadow-lg: 0 10px 30px -6px light-dark(rgb(16 24 40 / .18), rgb(0 0 0 / .6)), 0 2px 6px var(--pb-shadow-color);
+  --pb-ring: 0 0 0 3px color-mix(in srgb, var(--pb-accent) 30%, transparent);
+  --pb-radius: 10px;
+  --pb-radius-sm: 6px;
+
+  /* Typography */
+  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, "Inter", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-family-monospace: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-size-h1: 30px;
+  --font-size-h2: 24px;
+  --font-size-h3: 22px;
+  --font-size-h4: 17px;
+  --font-size-x-large: 15px;
+  --font-size-large: 14px;
+  --font-size-medium: 14px;
+  --font-size-small: 12.5px;
+  --font-size-x-small: 11.5px;
+  --line-height-default: 1.4;
+  --line-height-comfortable: 1.6;
+
+  /* Geometry */
+  --global-header-height: 56px;
+  --primary-region-border-radius: var(--pb-radius);
+  --menu-border-radius: var(--pb-radius);
+  --menu-padding: 6px;
+  --menuitem-border-radius: var(--pb-radius-sm);
+  --control-border-radius: var(--pb-radius-sm);
+  --control-padding: 7px 10px;
+  --button-border-radius: var(--pb-radius-sm);
+  --button-padding-medium: 6px 14px;
+  --button-padding-small: 3px 8px;
+
+  /* App & header */
+  --application-foreground-color: var(--pb-text);
+  --application-background-color: var(--pb-bg);
+  --application-header-foreground-color: var(--pb-text-2);
+  --application-header-background-color: var(--pb-header-bg);
+  --application-header-hovered-button-foreground-color: var(--pb-text);
+  --application-header-hovered-button-background-color: var(--pb-surface-3);
+  --application-header-input-foreground-color: var(--pb-text);
+  --application-header-input-background-color: var(--pb-surface-3);
+
+  /* Regions */
+  --primary-region-border-color: var(--pb-border);
+  --primary-region-box-shadow: var(--pb-shadow);
+  --primary-region-background-color: var(--pb-surface);
+  --primary-region-header-background-color: var(--pb-surface-2);
+  --secondary-region-border-color: var(--pb-border);
+  --secondary-region-background-color: var(--pb-surface-2);
+  --overlay-background-color: light-dark(rgb(16 24 40 / .45), rgb(0 0 0 / .65));
+
+  /* Labels & text */
+  --primary-label-color: var(--pb-text);
+  --secondary-label-color: var(--pb-text-2);
+  --tertiary-label-color: var(--pb-text-3);
+  --primary-text-color: var(--pb-text);
+  --primary-text-background-color: var(--pb-surface);
+  --secondary-text-color: var(--pb-text-2);
+  --secondary-text-border-color: var(--pb-border);
+  --secondary-text-background-color: var(--pb-surface-2);
+  --selected-text-background-color: var(--pb-accent-soft);
+  --link-text-color: var(--pb-link);
+  --hovered-link-text-color: var(--pb-link-hover);
+  --visited-link-text-color: var(--pb-link-visited);
+
+  /* Messages */
+  --warning-message-background-color: var(--pb-warning-bg);
+  --warning-message-border-color: var(--pb-warning-border);
+  --error-message-foreground-color: var(--pb-danger);
+  --error-message-background-color: var(--pb-danger-soft);
+  --positive-message-foreground-color: var(--pb-success);
+  --positive-message-background-color: var(--pb-success-soft);
+  --informative-message-background-color: var(--pb-warning-bg);
+
+  /* Controls */
+  --control-foreground-color: var(--pb-text);
+  --control-background-color: var(--pb-surface);
+  --control-accent-color: var(--pb-accent);
+  --control-border-color: var(--pb-border-strong);
+  --secondary-control-border-color: var(--pb-border);
+  --focused-control-border-color: var(--pb-accent);
+  --checked-control-background-color: var(--pb-accent);
+  --selected-control-foreground-color: var(--pb-text);
+  --selected-control-background-color: var(--pb-surface-3);
+  --invalid-control-border-color: var(--pb-danger);
+  --disabled-control-foreground-color: var(--pb-text-3);
+  --scrollbar-color: var(--pb-border-strong) transparent;
+
+  /* Buttons */
+  --primary-button-foreground-color: #fff;
+  --primary-button-background-color: var(--pb-accent);
+  --primary-button-border-color: var(--pb-accent);
+  --hovered-primary-button-foreground-color: #fff;
+  --hovered-primary-button-background-color: var(--pb-accent-hover);
+  --hovered-primary-button-border-color: var(--pb-accent-hover);
+  --pressed-primary-button-foreground-color: #fff;
+  --pressed-primary-button-background-color: var(--pb-accent-pressed);
+  --pressed-primary-button-border-color: var(--pb-accent-pressed);
+  --secondary-button-foreground-color: var(--pb-text);
+  --secondary-button-background-color: var(--pb-surface);
+  --secondary-button-border-color: var(--pb-border-strong);
+  --hovered-secondary-button-foreground-color: var(--pb-text);
+  --hovered-secondary-button-background-color: var(--pb-surface-2);
+  --hovered-secondary-button-border-color: var(--pb-border-strong);
+  --pressed-secondary-button-foreground-color: var(--pb-text);
+  --pressed-secondary-button-background-color: var(--pb-surface-3);
+  --pressed-secondary-button-border-color: var(--pb-border-strong);
+  --danger-button-foreground-color: #fff;
+  --danger-button-background-color: var(--pb-danger);
+  --danger-button-border-color: var(--pb-danger);
+  --selected-button-foreground-color: var(--pb-surface);
+  --selected-button-background-color: var(--pb-text);
+  --disabled-button-foreground-color: var(--pb-text-3);
+  --disabled-button-background-color: var(--pb-surface-2);
+
+  /* Menus, tabs, grids */
+  --menu-border-color: var(--pb-border);
+  --menu-foreground-color: var(--pb-text);
+  --menu-background-color: var(--pb-surface);
+  --menu-box-shadow: var(--pb-shadow-lg);
+  --hovered-menuitem-foreground-color: var(--pb-text);
+  --hovered-menuitem-background-color: var(--pb-surface-3);
+  --selected-tab-foreground-color: var(--pb-accent);
+  --selected-tab-border-color: var(--pb-accent);
+  --grid-background-color: var(--pb-surface);
+  --grid-background-hover-color: var(--pb-surface-2);
+  --grid-border-color: var(--pb-border);
+  --grid-header-background-color: var(--pb-surface-2);
+  --grid-subheader-background-color: var(--pb-surface-3);
+
+  /* Bug status & type */
+  --bug-status-color-open: light-dark(#1a7f37, #238636);
+  --bug-status-color-closed: light-dark(#6639ba, #8957e5);
+  --bug-status-color-untriaged: light-dark(#bc4c00, #bd561d);
+  --bug-type-color-defect: light-dark(#cf222e, #f85149);
+  --bug-type-color-enhancement: light-dark(#1a7f37, #3fb950);
+  --bug-type-color-task: light-dark(#0969da, #58a6ff);
+
+  /* BMO's RGB triplets (used as rgb(var(--x))) — light values */
+  --accent-color-red-1: 207, 34, 46;
+  --accent-color-red-2: 207, 34, 46;
+  --accent-color-green-1: 26, 127, 55;
+  --accent-color-blue-1: 0, 96, 223;
+  --accent-color-blue-2: 2, 80, 187;
+  --accent-color-lightyellow-1: 255, 248, 197;
+  --accent-color-pink-1: 255, 235, 233;
+  --accent-color-lightgreen-1: 218, 251, 225;
+  --accent-color-wine-1: 239, 233, 255;
+  --accent-color-purple-1: 110, 63, 209;
+}
+
+/* Triplets can't use light-dark(), so dark values are repeated for auto and forced modes. */
+@media (prefers-color-scheme: dark) {
+  :root.pb-on:not([data-pb-theme="light"]) {
+    --accent-color-red-1: 248, 81, 73;
+    --accent-color-red-2: 255, 123, 114;
+    --accent-color-green-1: 63, 185, 80;
+    --accent-color-blue-1: 61, 139, 253;
+    --accent-color-blue-2: 90, 156, 255;
+    --accent-color-lightyellow-1: 46, 38, 8;
+    --accent-color-pink-1: 73, 32, 34;
+    --accent-color-lightgreen-1: 20, 52, 32;
+    --accent-color-wine-1: 43, 35, 66;
+    --accent-color-purple-1: 182, 156, 255;
+  }
+}
+
+:root.pb-on[data-pb-theme="dark"] {
+  color-scheme: dark;
+  --accent-color-red-1: 248, 81, 73;
+  --accent-color-red-2: 255, 123, 114;
+  --accent-color-green-1: 63, 185, 80;
+  --accent-color-blue-1: 61, 139, 253;
+  --accent-color-blue-2: 90, 156, 255;
+  --accent-color-lightyellow-1: 46, 38, 8;
+  --accent-color-pink-1: 73, 32, 34;
+  --accent-color-lightgreen-1: 20, 52, 32;
+  --accent-color-wine-1: 43, 35, 66;
+  --accent-color-purple-1: 182, 156, 255;
+}
+
+:root.pb-on[data-pb-theme="light"] {
+  color-scheme: light;
+}
+
+/* Base */
+
+.pb-on body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.pb-on ::selection {
+  background-color: color-mix(in srgb, var(--pb-accent) 28%, transparent);
+}
+
+.pb-on :focus-visible {
+  outline: 2px solid var(--pb-accent);
+  outline-offset: 2px;
+}
+
+.pb-on h1,
+.pb-on h2,
+.pb-on h3,
+.pb-on h4 {
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+
+.pb-on a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.pb-on hr {
+  background-color: var(--pb-border);
+}
+
+/* Header */
+
+.pb-on #header {
+  border-bottom: 1px solid var(--pb-border);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  backdrop-filter: saturate(180%) blur(14px);
+}
+
+.pb-on #header .inner {
+  max-width: 1320px;
+  padding: 0 24px;
+  gap: 12px;
+}
+
+.pb-on #header-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+.pb-on #header-title a {
+  color: var(--pb-text);
+}
+
+.pb-on #header .inner .header-button {
+  border-radius: 8px;
+  height: 36px;
+  transition: background-color .15s, color .15s;
+}
+
+.pb-on #header .searchbox-outer {
+  height: 36px;
+  max-width: 560px;
+}
+
+.pb-on #header .searchbox-outer .icon {
+  top: 6px;
+  left: 6px;
+}
+
+.pb-on #header #quicksearch_top {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding-left: 36px;
+  line-height: 36px;
+  transition: border-color .15s, box-shadow .15s, background-color .15s;
+}
+
+.pb-on #header #quicksearch_top:hover {
+  border-color: var(--pb-border-strong);
+}
+
+.pb-on #header #quicksearch_top:focus {
+  border-color: var(--pb-accent);
+  background-color: var(--pb-surface);
+  box-shadow: var(--pb-ring);
+}
+
+.pb-on #header .dropdown-content {
+  margin-top: 4px;
+}
+
+/* Layout */
+
+.pb-on #main-inner {
+  box-sizing: border-box;
+  margin: 24px auto;
+  padding: 0 24px;
+  max-width: 1320px;
+}
+
+/* Forms */
+
+.pb-on input[type="date"],
+.pb-on input[type="email"],
+.pb-on input[type="number"],
+.pb-on input[type="password"],
+.pb-on input[type="text"],
+.pb-on input[type="url"],
+.pb-on input[type="search"],
+.pb-on input:not([type]),
+.pb-on select,
+.pb-on textarea {
+  transition: border-color .15s, box-shadow .15s;
+}
+
+/* BMO's control styles skip type="search", so match them here. */
+.pb-on input[type="search"] {
+  appearance: none;
+  box-sizing: border-box;
+  border: 1px solid var(--control-border-color);
+  border-radius: var(--control-border-radius);
+  padding: var(--control-padding);
+  color: var(--control-foreground-color);
+  background-color: var(--control-background-color);
+  font-family: var(--font-family-sans-serif);
+  outline: 0;
+}
+
+.pb-on input:is([type="date"], [type="email"], [type="number"], [type="password"], [type="text"], [type="url"], [type="search"], :not([type])):hover,
+.pb-on select:hover,
+.pb-on textarea:hover {
+  border-color: var(--pb-text-3);
+}
+
+.pb-on input:is([type="date"], [type="email"], [type="number"], [type="password"], [type="text"], [type="url"], [type="search"], :not([type])):focus,
+.pb-on select:focus,
+.pb-on textarea:focus {
+  border-color: var(--pb-accent);
+  box-shadow: var(--pb-ring);
+}
+
+.pb-on textarea {
+  border-radius: 8px;
+  font-size: var(--font-size-medium);
+}
+
+.pb-on select:not([multiple]):not([size]) {
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgb(132,141,151)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>');
+  background-size: 16px;
+  background-position: right 8px center;
+}
+
+.pb-on select:is([multiple], [size]) option {
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+
+/* A gradient, because Firefox paints its own highlight over background-color on focused listboxes. */
+.pb-on select:is([multiple], [size]) option:checked {
+  color: var(--pb-accent);
+  background: linear-gradient(var(--pb-accent-soft), var(--pb-accent-soft));
+  font-weight: 600;
+}
+
+.pb-on input[type="checkbox"],
+.pb-on input[type="radio"] {
+  border-width: 1.5px;
+  border-color: var(--pb-border-strong);
+  transition: border-color .15s, background-color .15s;
+}
+
+.pb-on input[type="checkbox"] {
+  border-radius: 4px;
+}
+
+.pb-on input[type="checkbox"]:checked {
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>');
+  background-size: 12px;
+}
+
+.pb-on input[type="checkbox"]:indeterminate {
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><path d="M6 12h12"/></svg>');
+  background-size: 12px;
+}
+
+.pb-on input[type="checkbox"]:focus-visible,
+.pb-on input[type="radio"]:focus-visible {
+  outline: none;
+  box-shadow: var(--pb-ring);
+}
+
+/* Buttons */
+
+.pb-on button,
+.pb-on input[type="button"],
+.pb-on input[type="submit"] {
+  font-weight: 500;
+  box-shadow: 0 1px 1px var(--pb-shadow-color);
+  transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s;
+}
+
+.pb-on button:focus-visible,
+.pb-on input[type="button"]:focus-visible,
+.pb-on input[type="submit"]:focus-visible {
+  outline: none;
+  box-shadow: var(--pb-ring);
+}
+
+.pb-on button.ghost,
+.pb-on button.iconic,
+.pb-on #header button,
+.pb-on #header .dropdown-button {
+  box-shadow: none;
+}
+
+.pb-on button.iconic {
+  border-radius: 8px;
+}
+
+.pb-on button.ghost:hover {
+  background-color: var(--pb-surface-3);
+}
+
+/* Menus */
+
+.pb-on .dropdown-content {
+  border-color: var(--pb-border);
+  box-shadow: var(--pb-shadow-lg);
+}
+
+.pb-on .dropdown-content [role="menuitem"],
+.pb-on .dropdown-content a {
+  border-radius: var(--pb-radius-sm);
+}
+
+/* Bug page: summary */
+
+.pb-on #summary-container {
+  padding: 4px 4px 0;
+}
+
+.pb-on #field-value-bug_id a {
+  color: var(--pb-text-2);
+  font-weight: 500;
+}
+
+.pb-on #field-value-short_desc {
+  font-weight: 650;
+  letter-spacing: -.015em;
+  line-height: 1.3;
+}
+
+.pb-on #field-status_summary .bug-status-label {
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+.pb-on .bug-type-label .icon {
+  border-radius: 4px;
+}
+
+/* Bug page: modules */
+
+.pb-on .module {
+  margin-top: 16px;
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-radius);
+  background-color: var(--pb-surface);
+  box-shadow: var(--pb-shadow);
+}
+
+.pb-on .module-header {
+  border-radius: calc(var(--pb-radius) - 1px) calc(var(--pb-radius) - 1px) 0 0;
+  color: var(--pb-text-2);
+  background: transparent;
+}
+
+.pb-on .module-header:has(.module-spinner[aria-expanded="false"]) {
+  border-radius: calc(var(--pb-radius) - 1px);
+}
+
+.pb-on .module-latch {
+  padding: 10px 14px;
+  border-radius: inherit;
+  transition: background-color .15s;
+}
+
+.pb-on .module-latch:hover {
+  background-color: var(--pb-surface-2);
+}
+
+.pb-on .module-spinner {
+  color: var(--pb-text-3);
+}
+
+.pb-on .module-title {
+  color: var(--pb-text);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.pb-on .module-subtitle {
+  color: var(--pb-text-3);
+}
+
+.pb-on .module-header + .module-content {
+  border-top: 1px solid var(--pb-border);
+}
+
+.pb-on .module-content {
+  padding: 10px 14px;
+}
+
+.pb-on .module .field {
+  margin: 6px 0;
+}
+
+.pb-on .module .field .name {
+  padding-top: 1px;
+  color: var(--pb-text-2);
+  font-size: var(--font-size-small);
+}
+
+.pb-on .module .field .name .help {
+  text-decoration: none;
+}
+
+.pb-on #cc-list,
+.pb-on .name-info-popup {
+  border-radius: var(--pb-radius);
+  box-shadow: var(--pb-shadow-lg);
+}
+
+/* Bug page: tables (attachments, flags, tracking) */
+
+.pb-on #attachments td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.pb-on #attachments tr + tr td {
+  border-top: 1px solid var(--pb-border);
+}
+
+.pb-on .tracking-flags th {
+  color: var(--pb-text-2);
+  font-weight: 500;
+}
+
+/* Bug page: comments & activity */
+
+.pb-on .change-set {
+  margin-top: 16px;
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-radius);
+  background-color: var(--pb-surface);
+  box-shadow: var(--pb-shadow);
+}
+
+.pb-on .change-set > :first-child {
+  border-top-left-radius: calc(var(--pb-radius) - 1px);
+  border-top-right-radius: calc(var(--pb-radius) - 1px);
+}
+
+.pb-on .change-set > :last-child {
+  border-bottom-left-radius: calc(var(--pb-radius) - 1px);
+  border-bottom-right-radius: calc(var(--pb-radius) - 1px);
+}
+
+.pb-on .change-set:target {
+  outline: none;
+  border-color: var(--pb-accent);
+  box-shadow: var(--pb-ring), var(--pb-shadow);
+}
+
+.pb-on .change-head {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--pb-border);
+  background-color: var(--pb-surface-2);
+}
+
+.pb-on .change-head.reporter {
+  background-color: color-mix(in srgb, var(--pb-accent) 6%, var(--pb-surface-2));
+}
+
+.pb-on .gravatar {
+  border-radius: 50%;
+}
+
+.pb-on .change-gravatar .vcard {
+  width: 32px;
+}
+
+.pb-on .change-authors {
+  font-weight: 600;
+}
+
+.pb-on .change-author .user-role {
+  border: 0;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background-color: var(--pb-success-soft);
+  font-weight: 500;
+}
+
+.pb-on .change-name,
+.pb-on .change-time {
+  color: var(--pb-text-3);
+}
+
+.pb-on h3.change-name a:hover {
+  color: var(--pb-accent);
+}
+
+.pb-on .comment-text {
+  padding: 14px 16px;
+  font-size: var(--font-size-medium);
+}
+
+.pb-on .comment-text:not(.markdown-body) {
+  font-size: 13px;
+  font-size-adjust: none;
+  line-height: 1.6;
+}
+
+.pb-on .comment-text span.quote,
+.pb-on .comment-text span.quote_wrapped,
+.pb-on .comment-text blockquote {
+  box-sizing: border-box;
+  border-left: 3px solid var(--pb-border-strong);
+  border-radius: 0 var(--pb-radius-sm) var(--pb-radius-sm) 0;
+  padding: 4px 10px !important;
+}
+
+.pb-on .comment-text.bz_private {
+  border: 0;
+  box-shadow: inset 3px 0 0 var(--pb-danger);
+  color: var(--pb-text);
+  background: var(--pb-danger-soft);
+}
+
+.pb-on .markdown-body pre,
+.pb-on .markdown-body code {
+  border-radius: var(--pb-radius-sm);
+  background-color: var(--pb-surface-3);
+}
+
+.pb-on .markdown-body pre code {
+  background: transparent;
+}
+
+.pb-on .activity {
+  padding: 8px 14px;
+  border-top: 1px solid var(--pb-border);
+  color: var(--pb-text-2);
+  background: var(--pb-surface-2);
+  font-size: var(--font-size-small);
+}
+
+.pb-on .comment-tag {
+  border-color: transparent;
+  border-radius: 999px;
+  padding: 2px 10px;
+  background-color: var(--pb-accent-soft);
+  color: var(--pb-accent);
+  font-weight: 500;
+}
+
+.pb-on .comment-reactions .sums button {
+  border-radius: 999px;
+}
+
+.pb-on .new-changes-separator span,
+.pb-on .new-changes-link {
+  border-radius: 999px;
+}
+
+.pb-on .change-set .attachment .outer,
+.pb-on .change-set .attachment pre {
+  border-radius: var(--pb-radius-sm);
+}
+
+/* Bug page: new comment */
+
+.pb-on #add-comment .text-editor,
+.pb-on #comment {
+  border-radius: var(--pb-radius);
+}
+
+/* Messages & banners */
+
+.pb-on #message-container > *,
+.pb-on .warning,
+.pb-on .throw_error,
+.pb-on #error_msg,
+.pb-on #message {
+  border-radius: var(--pb-radius);
+}
+
+/* Bug lists & generic tables */
+
+.pb-on table.bz_buglist {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-radius);
+  background-color: var(--pb-surface);
+  box-shadow: var(--pb-shadow);
+  overflow: hidden;
+}
+
+.pb-on table.bz_buglist th {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--pb-border);
+  color: var(--pb-text-2);
+  background-color: var(--pb-surface-2);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  text-align: left;
+}
+
+.pb-on table.bz_buglist th a {
+  color: inherit;
+}
+
+.pb-on table.bz_buglist td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--pb-border);
+}
+
+.pb-on table.bz_buglist tr:last-child td {
+  border-bottom: 0;
+}
+
+.pb-on table.bz_buglist tr:is(.bz_bugitem, [class*="bz_"]):hover td {
+  background-color: var(--pb-surface-2);
+}
+
+/* Footer */
+
+.pb-on #footer {
+  border-top: 1px solid var(--pb-border);
+  color: var(--pb-text-3);
+  background: transparent;
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .pb-on *,
+  .pb-on *::before,
+  .pb-on *::after {
+    transition: none !important;
+  }
+}

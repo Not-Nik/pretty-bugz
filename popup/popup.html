@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="../icons/icon.svg" alt="" width="28" height="28">
+    <h1>Pretty Bugz</h1>
+  </header>
+
+  <label class="row">
+    <span>Modern theme</span>
+    <input type="checkbox" id="enabled" class="switch">
+  </label>
+
+  <fieldset id="dependent">
+    <label class="row">
+      <span>
+        Improved page layouts
+        <small>Bug lists, search, new-bug wizard &amp; more</small>
+      </span>
+      <input type="checkbox" id="layouts" class="switch">
+    </label>
+
+    <fieldset class="row" id="theme-row">
+      <legend>Appearance</legend>
+      <div class="segmented" role="radiogroup">
+        <label><input type="radio" name="theme" value="auto"><span>Auto</span></label>
+        <label><input type="radio" name="theme" value="light"><span>Light</span></label>
+        <label><input type="radio" name="theme" value="dark"><span>Dark</span></label>
+      </div>
+    </fieldset>
+  </fieldset>
+
+  <script src="popup.js"></script>
+</body>
+</html>

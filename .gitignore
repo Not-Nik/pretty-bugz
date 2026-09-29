@@ -1,0 +1,5 @@
+node_modules/
+web-ext-artifacts/
+test/fixtures/
+test/out/
+.DS_Store
