@@ -68,7 +68,7 @@ There is no build step, bundler or dependency at runtime. Don't add one.
 - The undo test runs BMO's scripts when the network is available, but fixtures are logged out; logged-in UI (tweak mode, edit mode, watch buttons) needs mocks or `npm start`.
 - Screenshots are taken right at load. The harness freezes animations and transitions, and inlines BMO's icon font, but data-URL images may not be decoded yet, and `backdrop-filter` can render incorrectly in headless screenshots.
 - BMO's source (templates, JS, CSS) is at https://github.com/mozilla-bteam/bmo. Check it before guessing at markup.
-- If your editing tool uses JavaScript string replacement, `$$` in replacement text can collapse to `$`. Re-read edits that contain `$$` (the `$$` query helper appears in several layouts).
+- If your editing tool uses JavaScript string replacement, `$$` in replacement text can collapse to `$`. Re-read edits that contain `$$` (the `$$` query helper appears in several layouts); writing `$$$$` in the replacement produces `$$`.
 
 ## Releasing
 

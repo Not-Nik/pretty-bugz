@@ -4,6 +4,11 @@
   display: none;
 }
 
+/* Lists are often wide (tracking flags, many columns); use the whole window. */
+.pb-on.pb-layout .pb-buglist #main-inner {
+  max-width: none;
+}
+
 /* Header */
 
 .pb-on.pb-layout .pb-buglist-hero {
@@ -32,6 +37,21 @@
   background-color: var(--pb-accent-soft);
   font-size: var(--font-size-medium);
   font-weight: 600;
+}
+
+.pb-on.pb-layout .pb-buglist-limited {
+  border-radius: 999px;
+  padding: 2px 10px;
+  color: light-dark(#7a4a00, #f0c05e);
+  background-color: var(--pb-warning-bg);
+  font-size: var(--font-size-small);
+  font-weight: 500;
+}
+
+.pb-on.pb-layout .pb-buglist-limited a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
 }
 
 .pb-on.pb-layout .pb-buglist-meta {
@@ -121,8 +141,14 @@
   background-color: var(--pb-surface-3);
 }
 
+/* Visually hidden but still names the group for screen readers. */
 .pb-on.pb-layout .pb-buglist .bz_status_toggle_label {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .pb-on.pb-layout .pb-buglist .bz_status_toggle_btn {
@@ -310,13 +336,11 @@
 .pb-on.pb-layout .pb-buglist table.bz_buglist thead th {
   border-right: 0;
   border-bottom: 1px solid var(--pb-border);
-  padding: 9px 12px;
+  padding: 8px 10px;
   color: var(--pb-text-2);
   background-color: var(--pb-surface-2);
-  font-size: var(--font-size-x-small);
+  font-size: var(--font-size-small);
   font-weight: 600;
-  letter-spacing: .04em;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -352,10 +376,16 @@
 
 .pb-on.pb-layout .pb-buglist table.bz_buglist tbody td {
   border-bottom: 1px solid var(--pb-border);
-  padding: 10px 12px;
+  padding: 7px 10px;
   color: var(--pb-text-2);
   font-size: var(--font-size-small);
   vertical-align: middle;
+}
+
+/* Keep rows reached by j/k or Tab clear of the sticky site header, toolbar and table header. */
+.pb-on.pb-layout .pb-buglist table.bz_buglist tbody :is(tr, a) {
+  scroll-margin-top: calc(var(--global-header-height) + var(--pb-toolbar-height, 53px) + 40px);
+  scroll-margin-bottom: 16px;
 }
 
 .pb-on.pb-layout .pb-buglist table.bz_buglist tbody tr:last-child td {
@@ -374,35 +404,42 @@
   background-color: var(--pb-surface-2);
 }
 
-.pb-on.pb-layout .pb-buglist table.bz_buglist tbody tr.pb-current-row td {
+.pb-on.pb-layout .pb-buglist table.bz_buglist tbody tr.bz_bugitem:focus-within td {
   background-color: var(--pb-accent-soft);
 }
 
-.pb-on.pb-layout .pb-buglist table.bz_buglist tbody tr.pb-current-row td:first-child {
+.pb-on.pb-layout .pb-buglist table.bz_buglist tbody tr.bz_bugitem:focus-within td:first-child {
   box-shadow: inset 3px 0 0 var(--pb-accent);
 }
 
-.pb-on.pb-layout .pb-buglist tr.pb-filtered-out {
+/* Filtered-out rows; beats BMO's display rules for its narrow-screen card view. */
+.pb-on.pb-layout .pb-buglist table.bz_buglist tbody tr.bz_bugitem[hidden] {
   display: none;
 }
 
-.pb-on.pb-layout .pb-buglist table.bz_buglist.pb-no-matches tbody::after {
-  content: "No bugs in this list match the filter.";
-  display: block;
+.pb-on.pb-layout .pb-buglist-nomatch {
+  margin: -8px 0 16px;
+  border: 1px solid var(--pb-border);
+  border-top: 0;
+  border-radius: 0 0 var(--pb-radius) var(--pb-radius);
   padding: 24px;
-  color: var(--pb-text-3);
+  color: var(--pb-text-2);
+  background-color: var(--pb-surface);
   text-align: center;
 }
 
+.pb-on.pb-layout .pb-buglist-nomatch[hidden] {
+  display: none;
+}
+
 .pb-on.pb-layout .pb-buglist td.bz_id_column a {
-  color: var(--pb-text-3);
   font-family: var(--font-family-monospace);
   font-size: 12.5px;
 }
 
 .pb-on.pb-layout .pb-buglist td.bz_short_desc_column {
   width: 100%;
-  min-width: 280px;
+  min-width: 200px;
 }
 
 .pb-on.pb-layout .pb-buglist td.bz_short_desc_column a {
@@ -419,13 +456,9 @@
   color: var(--pb-accent);
 }
 
-.pb-on.pb-layout .pb-buglist tr:is(.bz_RESOLVED, .bz_VERIFIED, .bz_CLOSED) td:not(.bz_bug_status_column) {
-  opacity: .62;
-}
-
 .pb-on.pb-layout .pb-buglist tr:is(.bz_RESOLVED, .bz_VERIFIED, .bz_CLOSED) td.bz_short_desc_column a {
-  text-decoration: line-through;
-  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  color: var(--pb-text-2);
+  font-weight: normal;
 }
 
 /* Status pills show the full status from the title instead of BMO's four-letter abbreviation. */
@@ -434,7 +467,7 @@
 }
 
 .pb-on.pb-layout .pb-buglist td.bz_bug_status_column > span[title]::before {
-  content: attr(title);
+  content: attr(title) / "";
   display: inline-block;
   border-radius: 999px;
   padding: 2px 8px;
@@ -546,9 +579,9 @@
   text-decoration: none;
 }
 
-/* Narrow screens: BMO turns table.responsive rows into stacked blocks. */
+/* Narrow screens: BMO turns table.responsive rows into stacked blocks below 768px. */
 
-@media (width < 800px) {
+@media (width < 768px) {
   .pb-on.pb-layout .pb-buglist-toolbar {
     position: static;
     margin: 0;
@@ -556,13 +589,17 @@
     padding: 0 0 8px;
   }
 
-  .pb-on.pb-layout .pb-buglist table.bz_buglist {
+  .pb-on.pb-layout .pb-buglist #main-inner {
+    --pb-toolbar-height: 0px !important;
+  }
+
+  .pb-on.pb-layout .pb-buglist table.bz_buglist.responsive {
     border: 0;
     background: transparent;
     box-shadow: none;
   }
 
-  .pb-on.pb-layout .pb-buglist table.bz_buglist tbody tr.bz_bugitem {
+  .pb-on.pb-layout .pb-buglist table.bz_buglist.responsive tbody tr.bz_bugitem {
     margin: 0 0 10px;
     border: 1px solid var(--pb-border);
     border-radius: var(--pb-radius);
@@ -570,7 +607,7 @@
     background-color: var(--pb-surface);
   }
 
-  .pb-on.pb-layout .pb-buglist table.bz_buglist tbody td {
+  .pb-on.pb-layout .pb-buglist table.bz_buglist.responsive tbody td {
     border: 0;
     padding: 3px 10px;
   }
