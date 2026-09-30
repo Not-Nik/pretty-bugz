@@ -9,15 +9,8 @@
   const clean = (text) => text.replace(/\s+/g, " ").trim();
   const cloneChildren = (node) => [...node.childNodes].map((child) => child.cloneNode(true));
 
-  function nickAndName(text) {
-    const nick = text.match(/\[:([^\]\s]+)\]/)?.[1];
-    const name = text.replace(/\s*\[[^\]]*\]/g, "").replace(/\s*\([^)]*\)\s*$/, "").trim();
-    const note = text.match(/\(([^)]*)\)\s*$/)?.[1];
-    return { name: name || text, nick, note };
-  }
-
   function classify(table) {
-    const result = { identity: [], sections: [], products: null, statuses: null, other: [], footer: [], avatar: null, user: null };
+    const result = { identity: [], sections: [], products: null, statuses: null, other: [], footer: [], avatar: null, user: null, disabled: false, changeImage: null, edit: null, search: null };
     let section = null;
 
     for (const row of [...table.rows]) {
@@ -26,8 +19,21 @@
       const text = clean(row.textContent);
 
       if (row.querySelector("td#gravatar-container")) {
+        const userCell = cells.at(-1);
         result.avatar = row.querySelector("#gravatar");
-        result.user = row.querySelector(".vcard") ?? cells.at(-1);
+        result.changeImage = row.querySelector("#gravatar-container a");
+        result.user = userCell.querySelector(".vcard") ?? userCell;
+        result.disabled = /\(disabled\)$/.test(clean(userCell.textContent));
+        continue;
+      }
+      // Logged-in extras: the profile search form and, on your own profile, an Edit button.
+      if (!section && row.querySelector("form")) {
+        result.search = row.querySelector("form");
+        continue;
+      }
+      const edit = row.querySelector('a[href*="userprefs.cgi"]');
+      if (edit) {
+        result.edit = edit;
         continue;
       }
       if (!text || row.querySelector("td.separator")) continue;
@@ -36,7 +42,7 @@
         continue;
       }
       if (!th && cells.length === 1) {
-        section = { title: text, stats: [] };
+        section = { title: text, stats: [], rows: [] };
         result.sections.push(section);
         continue;
       }
@@ -49,7 +55,7 @@
       const value = th.nextElementSibling;
       if (!value) continue;
 
-      if (value.querySelector(".product_span")) {
+      if (label === "Activity by product") {
         result.products = [...value.querySelectorAll(".product_span")].map((span) => {
           const match = clean(span.textContent).replace(/,$/, "").match(/^(.*)\((\d+)\)$/);
           return { name: match?.[1].trim() ?? clean(span.textContent), count: Number(match?.[2] ?? 0), link: span.querySelector("a")?.getAttribute("href") };
@@ -58,7 +64,10 @@
         result.statuses = { label, items: clean(value.textContent).split(/,\s*/).filter(Boolean) };
       } else if (value.classList.contains("numeric") && section) {
         section.stats.push({ label, value, extra: value.nextElementSibling });
-      } else if (!section && !row.querySelector("[id]")) {
+      } else if (section) {
+        // E.g. the Phabricator rows, which BMO fills in later: keep them under their section title.
+        section.rows.push(row);
+      } else if (!row.querySelector("[id]")) {
         result.identity.push({ label, value });
       } else {
         result.other.push(row);
@@ -95,29 +104,36 @@
       const data = classify(table);
       changes.addClass(document.body, "pb-profile");
 
-      const fullName = clean(data.user?.textContent ?? "");
-      const { name, nick, note } = nickAndName(fullName);
       const avatar = data.avatar ? h("img", { class: "pb-pf-avatar", src: data.avatar.getAttribute("src"), alt: "" }) : h("span", { class: "pb-pf-avatar" });
+      const avatarSlot = h("div", { class: "pb-pf-avatar-slot" }, avatar);
 
       const facts = h("dl", { class: "pb-pf-facts" });
       for (const { label, value } of data.identity) {
         facts.append(h("dt", { text: label }), h("dd", {}, cloneChildren(value)));
       }
 
+      // The name is BMO's own user link (moved), so its user menu, email link and any
+      // availability notes like "[PTO until …]" stay as BMO shows them.
+      const heading = h("h1", { class: "pb-pf-name" });
+      const badges = h("p", { class: "pb-pf-handle" }, data.disabled ? h("span", { class: "pb-pf-disabled", text: "Account disabled" }) : null);
+      const actions = h("div", { class: "pb-pf-actions" });
       const hero = h("header", { class: "pb-pf-hero" },
-        avatar,
-        h("div", { class: "pb-pf-identity" },
-          h("h1", { class: "pb-pf-name", text: name }),
-          nick || note ? h("p", { class: "pb-pf-handle" }, nick ? h("span", { class: "pb-pf-nick", text: `:${nick}` }) : null, note ? h("span", { text: note }) : null) : null,
-          facts));
+        avatarSlot,
+        h("div", { class: "pb-pf-identity" }, heading, badges.childNodes.length ? badges : null, facts, actions));
 
       const view = h("div", { class: "pb-pf-view" }, hero);
 
       for (const section of data.sections) {
-        if (!section.stats.length) continue;
-        view.append(h("section", { class: "pb-pf-section" },
+        if (!section.stats.length && !section.rows.length) continue;
+        const node = h("section", { class: "pb-pf-section" },
           h("h2", { class: "pb-pf-section-title", text: section.title.replace(/\s*\(.*\)\s*$/, "") }),
-          h("div", { class: "pb-pf-tiles" }, section.stats.map(tile))));
+          section.stats.length ? h("div", { class: "pb-pf-tiles" }, section.stats.map(tile)) : null);
+        if (section.rows.length) {
+          const tbody = h("tbody");
+          node.append(h("table", { class: "pb-pf-more" }, tbody));
+          section.moveRows = () => section.rows.forEach((row) => changes.move(row, tbody));
+        }
+        view.append(node);
       }
 
       if (data.statuses) {
@@ -139,6 +155,15 @@
       }
 
       changes.insert(view, main, table);
+
+      if (data.user) changes.move(data.user, heading);
+      if (data.changeImage) changes.move(data.changeImage, avatarSlot);
+      if (data.edit) changes.move(data.edit, actions);
+      if (data.search) {
+        changes.move(data.search, actions);
+        changes.addClass(data.search, "pb-pf-search");
+      }
+      for (const section of data.sections) section.moveRows?.();
 
       if (data.other.length) {
         const extra = h("table", { class: "pb-pf-more" });

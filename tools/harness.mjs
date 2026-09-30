@@ -105,8 +105,12 @@ function buildPage(fixture, { theme = "auto", layouts = true, extra = "" } = {})
 function pagePath(fixtureName, query) {
   const page = PAGES.find((p) => p.name === fixtureName);
   const url = new URL(page?.url ?? `/${fixtureName}`, BMO);
-  if (query) url.search = query;
-  return url.pathname + url.search;
+  if (query) {
+    const [search, hash] = query.split("#");
+    url.search = search;
+    if (hash) url.hash = hash;
+  }
+  return url.pathname + url.search + url.hash;
 }
 
 // Serves one page from memory on its own port, so parallel runs never share state.

@@ -35,16 +35,60 @@
   object-fit: cover;
 }
 
+.pb-on.pb-layout .pb-pf-avatar-slot {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-small);
+}
+
 .pb-on.pb-layout .pb-pf-identity {
+  flex: 1;
   min-width: 0;
 }
 
 .pb-on.pb-layout .pb-pf-name {
   margin: 6px 0 0;
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: -.025em;
-  line-height: 1.2;
+  line-height: 1.25;
+}
+
+.pb-on.pb-layout .pb-pf-name .vcard,
+.pb-on.pb-layout .pb-pf-name .vcard a {
+  display: inline;
+  color: var(--pb-text);
+}
+
+.pb-on.pb-layout .pb-pf-disabled {
+  border-radius: 999px;
+  padding: 1px 9px;
+  color: var(--pb-danger);
+  background-color: var(--pb-danger-soft);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+.pb-on.pb-layout .pb-pf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.pb-on.pb-layout .pb-pf-actions:empty {
+  display: none;
+}
+
+.pb-on.pb-layout .pb-pf-actions form.pb-pf-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 0 auto;
 }
 
 .pb-on.pb-layout .pb-pf-handle {

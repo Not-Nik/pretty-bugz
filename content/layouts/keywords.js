@@ -18,14 +18,16 @@
   function buildCard(keyword) {
     const description = h("p", { class: "pb-kw-description" });
     description.append(...[...keyword.description.childNodes].map((n) => n.cloneNode(true)));
+    const links = [
+      keyword.open ? h("a", { href: keyword.open.getAttribute("href"), text: "Open bugs", "aria-label": `Open bugs with ${keyword.name}` }) : null,
+      keyword.total ? h("a", { class: "pb-kw-total", href: keyword.total.getAttribute("href"), text: `${keyword.count.toLocaleString()} total`, "aria-label": `All ${keyword.count.toLocaleString()} bugs with ${keyword.name}` }) : null,
+    ].filter(Boolean);
     const card = h("article", { class: `pb-kw-card${keyword.inactive ? " pb-kw-inactive" : ""}` },
       h("header", { class: "pb-kw-head" },
-        h("code", { class: "pb-kw-name", text: keyword.name }),
+        h("h2", { class: "pb-kw-heading" }, h("code", { class: "pb-kw-name", text: keyword.name })),
         keyword.inactive ? h("span", { class: "pb-kw-badge", text: "Inactive" }) : null),
       description,
-      h("footer", { class: "pb-kw-foot" },
-        keyword.open ? h("a", { href: keyword.open.getAttribute("href"), text: "Open bugs" }) : null,
-        keyword.total ? h("a", { class: "pb-kw-total", href: keyword.total.getAttribute("href"), text: `${keyword.count.toLocaleString()} total` }) : null));
+      links.length ? h("footer", { class: "pb-kw-foot" }, links) : null);
     card.dataset.search = `${keyword.name} ${clean(keyword.description.textContent)}`.toLowerCase();
     return card;
   }
@@ -60,29 +62,41 @@
       changes.insert(view, main, table);
       changes.addClass(table, "pb-hidden");
 
-      const toggle = document.getElementById("keywords_show_hide");
-      if (toggle) {
-        changes.move(toggle, toolbar);
-        changes.addClass(toggle, "pb-kw-toggle");
-        // BMO's jQuery handler flips the link text after ours runs, so read it on the next tick.
-        const sync = () => grid.classList.toggle("pb-kw-hide-inactive", /^\s*Show/.test(toggle.textContent));
-        changes.listen(toggle, "click", () => setTimeout(sync));
-        sync();
-      }
+      const hidingInactive = () => grid.classList.contains("pb-kw-hide-inactive");
+      const available = () => cards.filter((c) => !(hidingInactive() && c.keyword.inactive));
 
-      input.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") event.preventDefault();
-      });
-      input.addEventListener("input", () => {
+      function filter() {
         const terms = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
         let shown = 0;
-        for (const { card } of cards) {
+        for (const { card, keyword } of cards) {
           const match = terms.every((t) => card.dataset.search.includes(t));
           card.hidden = !match;
-          if (match) shown++;
+          if (match && !(hidingInactive() && keyword.inactive)) shown++;
         }
-        count.textContent = terms.length ? `${shown} of ${cards.length}` : "";
-      });
+        const total = available().length;
+        count.textContent = terms.length ? `${shown} of ${total}` : "";
+        input.placeholder = `Filter ${total} keywords…`;
+      }
+
+      const toggle = document.getElementById("keywords_show_hide");
+      if (toggle) {
+        const holder = toggle.parentElement;
+        changes.move(toggle, toolbar);
+        changes.addClass(toggle, "pb-kw-toggle");
+        if (holder?.tagName === "P" && !holder.textContent.trim()) changes.addClass(holder, "pb-hidden");
+        // BMO's jQuery ready handler flips the link (and its text) at an unknown time relative to us,
+        // and its trigger() skips native listeners, so follow the text itself.
+        const sync = () => {
+          grid.classList.toggle("pb-kw-hide-inactive", /^\s*Show/.test(toggle.textContent));
+          filter();
+        };
+        changes.observe(toggle, sync, { childList: true, characterData: true, subtree: true });
+        sync();
+      } else {
+        filter();
+      }
+
+      input.addEventListener("input", filter);
       sort.addEventListener("change", () => {
         const ordered = [...cards].sort((a, b) => sort.value === "count"
           ? b.keyword.count - a.keyword.count
@@ -91,11 +105,21 @@
       });
 
       // Links like describekeywords.cgi#crash point at the hidden table row.
-      const target = location.hash && cards.find((c) => `#${c.keyword.id}` === decodeURIComponent(location.hash));
-      if (target) {
-        target.card.classList.add("pb-kw-target");
+      const showTarget = () => {
+        let id = "";
+        try {
+          id = decodeURIComponent(location.hash.slice(1));
+        } catch {
+          return;
+        }
+        const target = id && cards.find((c) => c.keyword.id === id);
+        if (!target) return;
+        for (const c of cards) c.card.classList.toggle("pb-kw-target", c === target);
+        if (target.keyword.inactive && hidingInactive()) toggle?.click();
         requestAnimationFrame(() => target.card.scrollIntoView({ block: "center" }));
-      }
+      };
+      showTarget();
+      changes.listen(window, "hashchange", showTarget);
     },
   });
 })();

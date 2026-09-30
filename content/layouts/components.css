@@ -121,22 +121,22 @@
   display: none;
 }
 
-.pb-on.pb-layout button.pb-dc-letter {
-  border: 0;
+.pb-on.pb-layout a.pb-dc-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 6px;
-  padding: 0 !important;
   width: 26px;
   height: 26px;
   color: var(--pb-text-2);
-  background: transparent;
-  box-shadow: none;
   font-size: var(--font-size-small);
   font-weight: 600;
 }
 
-.pb-on.pb-layout button.pb-dc-letter:hover {
+.pb-on.pb-layout a.pb-dc-letter:hover {
   color: var(--pb-accent);
   background-color: var(--pb-accent-soft);
+  text-decoration: none;
 }
 
 /* Component cards */
@@ -165,12 +165,12 @@
   box-shadow: var(--pb-shadow-lg);
 }
 
-.pb-on.pb-layout .pb-components section.component.highlight {
+.pb-on.pb-layout .pb-components section.component:is(.highlight, .pb-dc-target) {
   border: 1px solid var(--pb-accent);
   box-shadow: var(--pb-ring), var(--pb-shadow);
 }
 
-.pb-on.pb-layout .pb-components section.component.pb-filtered-out {
+.pb-on.pb-layout .pb-components section.component[hidden] {
   display: none;
 }
 
@@ -205,7 +205,7 @@
   line-clamp: 4;
 }
 
-.pb-on.pb-layout .pb-components section.component.pb-dc-expanded p.description {
+.pb-on.pb-layout .pb-components section.component:has(.pb-dc-more[aria-expanded="true"]) p.description {
   display: block;
 }
 
