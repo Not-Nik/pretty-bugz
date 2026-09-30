@@ -7,20 +7,26 @@
 
   const $ = (selector, root = document) => root.querySelector(selector);
 
-  function setAttribute(node, name, value, changes) {
-    const previous = node.getAttribute(name);
-    node.setAttribute(name, value);
-    changes.defer(() => {
-      if (previous === null) node.removeAttribute(name);
-      else node.setAttribute(name, previous);
-    });
-  }
-
+  // BMO's hidden table keeps its own <label for>; name the moved control from the pill instead,
+  // so it doesn't end up with two labels.
   function pill(label, control, changes) {
-    const wrapper = h("label", { class: "pb-ss-pill" }, h("span", { class: "pb-ss-pill-label", text: label }));
+    const id = `pb-ss-label-${control.id || control.name}`;
+    const wrapper = h("span", { class: "pb-ss-pill" }, h("label", { class: "pb-ss-pill-label", id, for: control.id, text: label }));
     changes.insert(wrapper, control.parentNode, control);
     changes.move(control, wrapper);
+    changes.attr(control, "aria-labelledby", id);
     return wrapper;
+  }
+
+  // Moving an element drops its focus (BMO autofocuses the search box), so give it back after
+  // the move and again after undo moves it home.
+  function moveKeepingFocus(node, parent, changes) {
+    const focused = document.activeElement === node || (node.hasAttribute("autofocus") && document.activeElement?.matches("body, main"));
+    changes.move(node, parent);
+    if (focused) node.focus({ preventScroll: true });
+    changes.defer(() => {
+      if (document.activeElement === node) queueMicrotask(() => node.focus({ preventScroll: true }));
+    });
   }
 
   function hideHelp(tabbody, changes) {
@@ -28,13 +34,14 @@
   }
 
   function buildHero(title, hint, changes, parent, before) {
-    const input = h("div", { class: "pb-ss-input" });
+    // Clicks on the magnifier padding should still reach the input.
+    const input = h("div", { class: "pb-ss-input", onclick: (event) => event.target === input && $("#content", input)?.focus() });
     const filters = h("div", { class: "pb-ss-filters" });
     const hero = h("section", { class: "pb-ss-hero" },
-      h("h1", { class: "pb-ss-title", text: title }),
+      h("h1", { class: "pb-ss-title", id: "pb-ss-title", text: title }),
       input,
       filters,
-      h("p", { class: "pb-ss-hint", text: hint }));
+      h("p", { class: "pb-ss-hint" }, hint));
     changes.insert(hero, parent, before);
     return { hero, input, filters };
   }
@@ -56,14 +63,18 @@
       changes.addClass(document.body, "pb-simple-search");
 
       hideHelp(tabbody, changes);
+      // BMO only searches summaries unless "Search comments" is ticked (the description is comment 0).
       const { input, filters } = buildHero(
         "Find a bug",
-        "Searches summaries and descriptions (and comments, if enabled). Results are sorted by relevance.",
+        ["Searches bug summaries. Tick “Search comments” to include descriptions and comments. ",
+          h("a", { href: "page.cgi?id=quicksearch.html", text: "Search syntax" }), " · ",
+          h("a", { href: "query.cgi?format=advanced", text: "Advanced search" })],
         changes, form, table,
       );
-      changes.move(content, input);
+      moveKeepingFocus(content, input, changes);
       changes.move(submit, input);
-      setAttribute(content, "placeholder", "e.g. crash secure SSL flash", changes);
+      changes.attr(content, "placeholder", "e.g. crash when opening a PDF");
+      changes.attr(content, "aria-labelledby", "pb-ss-title");
 
       const status = $("#bug_status", form);
       const product = $("#product", form);
@@ -95,18 +106,20 @@
       const content = $("#content", tabbody);
       const product = $("#product", tabbody);
       const table = content.closest("table");
+      if (!table) return;
       changes.addClass(document.body, "pb-instant-search");
 
       hideHelp(tabbody, changes);
       const { input, filters } = buildHero(
-        "Instant search",
-        "Matches bug summaries as you type. Related products may be included.",
+        "Check for existing bugs",
+        "Matches bug summaries as you type (at least 4 characters). Related products may be included.",
         changes, tabbody, table,
       );
-      changes.move(content, input);
-      setAttribute(content, "placeholder", "Start typing a bug summary…", changes);
+      moveKeepingFocus(content, input, changes);
+      changes.attr(content, "placeholder", "Start typing a bug summary…");
+      changes.attr(content, "aria-labelledby", "pb-ss-title");
       if (product) changes.move(pill("Product", product, changes), filters);
-      if (table) changes.addClass(table, "pb-hidden");
+      changes.addClass(table, "pb-hidden");
       const br = results.previousElementSibling;
       if (br?.tagName === "BR") changes.addClass(br, "pb-hidden");
     },

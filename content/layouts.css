@@ -155,13 +155,16 @@
   margin-left: auto;
 }
 
+/* Block, not flex: BMO's loose text ("Sort results by :", "&nbsp;") would become spaced-out items. */
 .pb-on.pb-layout .pb-actionbar p {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   margin: 0;
   color: var(--pb-text-2);
   font-size: var(--font-size-small);
+}
+
+/* Keep fields reached by Tab clear of the sticky action bar. */
+:root.pb-on.pb-layout:has(body.pb-query-advanced) {
+  scroll-padding-bottom: 96px;
 }
 
 /* Search tabs (all query.cgi formats) */
@@ -314,7 +317,7 @@
   min-height: 190px;
 }
 
-.pb-on.pb-layout .pb-query-advanced .pb-has-selection select {
+.pb-on.pb-layout .pb-query-advanced :is(.search_field_grid, li):has(.pb-select-meta.pb-has-selection) select {
   border-color: color-mix(in srgb, var(--pb-accent) 55%, var(--pb-border-strong));
 }
 
@@ -759,8 +762,8 @@
     max-width: none;
   }
 
+  /* On narrow screens the wrapped bar would cover too much of the form. */
   .pb-on.pb-layout .pb-actionbar {
-    bottom: 0;
-    border-radius: 12px 12px 0 0;
+    position: static;
   }
 }

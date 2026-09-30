@@ -23,16 +23,24 @@
     return ["text", "search", "email", "url", "number", "date"].includes(control.type) && control.value.trim() !== "";
   }
 
+  // Counts criteria, not controls: one History criterion spans chfield/from/to/value, and a custom
+  // search row counts once its field is picked, even for value-less operators like "is empty".
   function countActive(container) {
-    return [...container.querySelectorAll("input, select, textarea")].filter(isActive).length;
+    const keys = new Set();
+    for (const control of container.querySelectorAll("input, select, textarea")) {
+      const row = control.name?.match(/^f(\d+)$/);
+      if (row && control.value && control.value !== "noop") keys.add(`row${row[1]}`);
+      else if (isActive(control) && !/^[ovn]\d+$/.test(control.name)) keys.add(control.name.replace(/^chfield.*/, "chfield"));
+    }
+    return keys.size;
   }
 
-  function enhanceMultiSelect(select, changes) {
+  function enhanceMultiSelect(select, alwaysFilter, changes) {
     const container = select.closest(".search_field_grid, li") ?? select.parentNode;
     const label = container.querySelector(".field_label, label");
-    const labelText = label?.textContent.replace(/[:\s]+$/, "").trim() || select.name;
+    const labelText = select.id === "chfield" ? "fields" : label?.textContent.replace(/[:\s]+$/, "").trim() || select.name;
 
-    const count = h("span", { class: "pb-count", hidden: true });
+    const count = h("span", { class: "pb-count", id: `pb-count-${select.id || select.name}`, hidden: true });
     const clear = h("button", {
       type: "button",
       class: "pb-clear",
@@ -46,9 +54,10 @@
     });
     const meta = h("span", { class: "pb-select-meta" }, count, clear);
     if (label) changes.insert(meta, label.parentNode, label.nextSibling);
+    changes.attr(select, "aria-describedby", count.id);
 
     let filter = null;
-    if (select.options.length > FILTER_THRESHOLD) {
+    if (alwaysFilter || select.options.length > FILTER_THRESHOLD) {
       filter = h("input", {
         type: "search",
         class: "pb-filter",
@@ -79,20 +88,25 @@
       }
     }
 
+    // State lives on our meta element (CSS uses :has), not on BMO's container.
     function refresh() {
       const selected = select.selectedOptions.length;
       count.textContent = `${selected} selected`;
       count.hidden = clear.hidden = selected === 0;
-      container.classList.toggle("pb-has-selection", selected > 0);
+      meta.classList.toggle("pb-has-selection", selected > 0);
     }
 
-    changes.listen(select, "change", refresh);
+    // Shift-click can select a range across options the filter hides; re-filtering reveals them,
+    // since selected options always stay visible.
+    changes.listen(select, "change", () => {
+      applyFilter();
+      refresh();
+    });
     // productform.js rebuilds component/version/milestone options when the product changes.
     changes.observe(select, () => {
       applyFilter();
       refresh();
     }, { childList: true, subtree: true });
-    changes.defer(() => container.classList.remove("pb-has-selection"));
     refresh();
   }
 
@@ -136,7 +150,7 @@
   function buildActionBar(form, changes) {
     const start = h("div", { class: "pb-actionbar-start" });
     const end = h("div", { class: "pb-actionbar-end" });
-    const bar = h("div", { class: "pb-actionbar", role: "toolbar", "aria-label": "Search actions" }, start, end);
+    const bar = h("div", { class: "pb-actionbar", role: "group", "aria-label": "Search actions" }, start, end);
     changes.insert(bar, form);
 
     const remember = byId("remasdefault")?.closest("p");
@@ -144,10 +158,11 @@
     const order = byId("order")?.closest("p");
     const search = byId("Search")?.closest("p");
 
-    if (remember) changes.move(remember, start);
+    // "…and remember these as my default search" only reads right next to the Search button.
     if (nuke) changes.move(nuke, start);
     if (order) changes.move(order, end);
     if (search) changes.move(search, end);
+    if (remember) changes.move(remember, end);
   }
 
   register({
@@ -165,8 +180,10 @@
       const badges = buildSectionCards(changes);
       buildActionBar(form, changes);
 
+      // Every Product & Status list gets a filter so the lists line up.
+      const basics = byId("pb-query-basics");
       for (const select of form.querySelectorAll(".search_field_grid select[multiple], #chfield")) {
-        enhanceMultiSelect(select, changes);
+        enhanceMultiSelect(select, !!basics?.contains(select), changes);
       }
 
       const updateBadges = () => {
@@ -178,9 +195,14 @@
       };
       changes.listen(form, "input", updateBadges);
       changes.listen(form, "change", updateBadges);
-      // Custom search rows are added and removed by advanced-search.js.
-      const custom = byId("custom-search");
-      if (custom) changes.observe(custom, updateBadges, { childList: true, subtree: true });
+      // advanced-search.js adds custom search rows and productform.js rebuilds option lists
+      // (dropping selections) without firing change events.
+      let frame = 0;
+      changes.observe(form, () => {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(updateBadges);
+      }, { childList: true, subtree: true });
+      changes.defer(() => cancelAnimationFrame(frame));
       updateBadges();
     },
   });

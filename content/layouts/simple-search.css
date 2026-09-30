@@ -65,7 +65,9 @@
   font-size: 18px;
 }
 
+/* The whole pill shows focus; an outline on the inner input would double it. */
 .pb-on.pb-layout .pb-ss-input #content:focus {
+  outline: none;
   box-shadow: none;
 }
 
@@ -95,9 +97,10 @@
 }
 
 .pb-on.pb-layout .pb-ss-pill-label {
-  color: var(--pb-text-3);
+  color: var(--pb-text-2);
   font-size: var(--font-size-small);
   font-weight: 500;
+  cursor: pointer;
 }
 
 .pb-on.pb-layout .pb-ss-pill select {
@@ -110,6 +113,7 @@
 }
 
 .pb-on.pb-layout .pb-ss-pill select:focus {
+  outline: none;
   box-shadow: none;
 }
 
@@ -141,7 +145,7 @@
 
 .pb-on.pb-layout .pb-ss-hint {
   margin: 0;
-  color: var(--pb-text-3);
+  color: var(--pb-text-2);
   font-size: var(--font-size-small);
   text-align: center;
 }
@@ -153,7 +157,13 @@
   max-width: 1080px;
 }
 
-.pb-on.pb-layout table.data-table {
+.pb-on.pb-layout .pb-instant-search .data-table-container .message {
+  margin: 8px 0;
+  color: var(--pb-text-2);
+  text-align: center;
+}
+
+.pb-on.pb-layout .pb-instant-search table.data-table {
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid var(--pb-border);
@@ -164,29 +174,34 @@
   overflow: hidden;
 }
 
-.pb-on.pb-layout table.data-table th {
+/* BMO sets cell padding with !important. */
+.pb-on.pb-layout .pb-instant-search table.data-table th {
   border-bottom: 1px solid var(--pb-border);
-  padding: 9px 12px;
+  padding: 9px 12px !important;
   color: var(--pb-text-2);
   background-color: var(--pb-surface-2);
-  font-size: var(--font-size-x-small);
+  font-size: var(--font-size-small);
   font-weight: 600;
-  letter-spacing: .04em;
   text-align: left;
-  text-transform: uppercase;
 }
 
-.pb-on.pb-layout table.data-table td {
-  border-bottom: 1px solid var(--pb-border);
-  padding: 9px 12px;
+.pb-on.pb-layout .pb-instant-search table.data-table td {
+  padding: 9px 12px !important;
   font-size: var(--font-size-small);
 }
 
-.pb-on.pb-layout table.data-table tbody tr:last-child td {
-  border-bottom: 0;
+/* Below 768px BMO turns rows into cards; lines between every field would be noise there. */
+@media (width >= 768px) {
+  .pb-on.pb-layout .pb-instant-search table.data-table td {
+    border-bottom: 1px solid var(--pb-border);
+  }
+
+  .pb-on.pb-layout .pb-instant-search table.data-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
 }
 
-.pb-on.pb-layout table.data-table tbody tr:hover td {
+.pb-on.pb-layout .pb-instant-search table.data-table tbody tr:hover td {
   background-color: var(--pb-surface-2);
 }
 
