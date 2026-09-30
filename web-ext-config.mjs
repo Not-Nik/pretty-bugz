@@ -11,7 +11,9 @@ export default {
     "test",
     "tools",
   ],
+  // An .xpi installs by opening or dropping it into Firefox, and AMO accepts it for upload too.
   build: {
+    filename: "pretty-bugz-{version}.xpi",
     overwriteDest: true,
   },
 };

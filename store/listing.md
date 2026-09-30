@@ -79,7 +79,7 @@ The listing icon is `store/icon-128.png` (the extension itself ships `icons/icon
 
 ```text
 - No build step, bundler, minifier or third-party code: the submitted files are the source.
-  Source: https://github.com/Not-Nik/pretty-bugz (package with `npx web-ext build`).
+  Source: https://github.com/Not-Nik/pretty-bugz (package with `npm run build`).
 - No remote code, no eval, no network requests. Content scripts only restyle and rearrange
   bugzilla.mozilla.org's existing DOM; every change is recorded and reverted when the user
   turns layouts off.
@@ -92,5 +92,5 @@ The listing icon is `store/icon-128.png` (the extension itself ships `icons/icon
 
 1. Bump `version` in `manifest.json` and `package.json`.
 2. `npm run check && npm run lint && npm test`
-3. `npm run build` → upload `web-ext-artifacts/pretty_bugz-<version>.zip`.
+3. `npm run build` → upload `web-ext-artifacts/pretty-bugz-<version>.xpi` (or `npm run sign` for a signed, self-distributed build).
 4. Refresh screenshots if the UI changed (see AGENTS.md, "Store screenshots").

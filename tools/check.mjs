@@ -27,11 +27,14 @@ for (const file of readdirSync(join(ROOT, "content", "layouts"))) {
   if (!registered.has(path)) problems.push(`${path} is not listed in manifest.json`);
 }
 
+const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
+if (pkg.version !== manifest.version) problems.push(`package.json version ${pkg.version} differs from manifest.json version ${manifest.version}`);
+
 const js = manifest.content_scripts[0].js;
 if (js.at(-1) !== "content/content.js") problems.push("content/content.js must be the last content script");
 if (js[0] !== "content/lib.js") problems.push("content/lib.js must be the first content script");
 
-const scripts = [...js, "popup/popup.js", "tools/harness.mjs", "tools/check.mjs"];
+const scripts = [...js, "popup/popup.js", "tools/harness.mjs", "tools/check.mjs", "tools/check-package.mjs"];
 for (const file of scripts) {
   const result = spawnSync(process.execPath, ["--check", join(ROOT, file)], { encoding: "utf8" });
   if (result.status !== 0) problems.push(`${file} does not parse:\n${result.stderr}`);

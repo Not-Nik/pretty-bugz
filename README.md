@@ -57,8 +57,13 @@ npm run lint         # web-ext lint
 npm run fixtures     # downloads real BMO pages into test/fixtures (needs network + Chrome)
 npm test             # applies and reverts every layout on every fixture
 npm run screenshots  # regenerates store/screenshots
-npm run build        # packages web-ext-artifacts/pretty_bugz-<version>.zip
+npm run build        # checks, lints and packages web-ext-artifacts/pretty-bugz-<version>.xpi
+npm run sign         # builds, then has addons.mozilla.org sign it for self-distribution
 ```
+
+`npm run build` produces an unsigned `.xpi` and verifies it: the package must contain exactly the files in `manifest.json`, `LICENSE`, `content/`, `popup/` and `icons/`, and pass addons-linter with no warnings. Release Firefox only installs signed add-ons; the unsigned file can be loaded temporarily from `about:debugging`, installed in Developer Edition, Nightly or ESR with `xpinstall.signatures.required` set to `false`, or uploaded to addons.mozilla.org.
+
+`npm run sign` needs AMO API credentials (from https://addons.mozilla.org/developers/addon/api/key/) in `WEB_EXT_API_KEY` and `WEB_EXT_API_SECRET`. It submits the build as an unlisted version and downloads the signed `.xpi`, which installs in any Firefox, into `web-ext-artifacts/`. The first submission registers the add-on ID in `manifest.json` with AMO for good.
 
 The offline harness (`tools/harness.mjs`) injects the extension into saved pages and screenshots them with headless Firefox. `npm test` uses headless Chrome. By default it looks for both browsers in `/Applications`; set `FIREFOX` and `CHROME` to use other paths.
 

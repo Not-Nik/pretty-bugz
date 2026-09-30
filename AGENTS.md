@@ -6,11 +6,12 @@ Guidance for AI agents and contributors working on Pretty Bugz, a Manifest V3 Fi
 
 ```sh
 npm run check        # manifest ↔ files consistency, script order, syntax (fast, run after every change)
-npm run lint         # web-ext lint, must report 0 errors / 0 warnings
+npm run lint         # web-ext lint; warnings fail it
 npm test             # applies, exercises (filters, j/k, toggle buttons) and reverts every layout on every fixture, then compares the whole document (headless Chrome, ~5 min)
 npm run fixtures     # (re)download real BMO pages into test/fixtures (gitignored)
 npm run screenshots  # regenerate store/screenshots (headless Firefox)
-npm run build        # web-ext build → web-ext-artifacts/
+npm run build        # check + lint, then web-ext-artifacts/pretty-bugz-<version>.xpi, verified by tools/check-package.mjs
+npm run sign         # build, then sign as an unlisted AMO version (needs WEB_EXT_API_KEY / WEB_EXT_API_SECRET)
 ```
 
 For one page: `node tools/harness.mjs shot <fixture> [--theme dark] [--os dark] [--size 1400,1000] [--query "?id=x.html"] [--extra tools/extras/x.js,other.js] [--no-layouts] [--out file.png]` and `node tools/harness.mjs undo <fixture>`. `--os dark` simulates a dark OS, so combine it with `--theme light` to check forced light. `node tools/harness.mjs probe <fixture> --extra x.js` runs a script in headless Chrome and prints the text of the element with id `pb-probe`, which is handy for measuring layout or computed styles. Fixtures come from `test/fixtures/` (run `npm run fixtures` first) or `tools/fixtures/` (checked-in mocks), and are served at their real BMO path.

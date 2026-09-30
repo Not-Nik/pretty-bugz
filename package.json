@@ -14,9 +14,10 @@
   },
   "scripts": {
     "start": "web-ext run --start-url https://bugzilla.mozilla.org/show_bug.cgi?id=1000000",
-    "lint": "web-ext lint",
+    "lint": "web-ext lint --warnings-as-errors",
     "check": "node tools/check.mjs",
-    "build": "web-ext build --overwrite-dest",
+    "build": "npm run check && npm run lint && web-ext build && node tools/check-package.mjs",
+    "sign": "npm run build && web-ext sign --channel unlisted",
     "fixtures": "node tools/harness.mjs fetch",
     "test": "node tools/harness.mjs undo-all",
     "screenshots": "node tools/harness.mjs screenshots"
