@@ -20,7 +20,7 @@ A Firefox extension that gives [bugzilla.mozilla.org](https://bugzilla.mozilla.o
 | `enter_bug.cgi` | One page: essentials first (Summary, Category, Description, Attachment, Security), optional modules under "More fields", and a sticky rail with a section checklist, live summary and Submit |
 | `enter_bug.cgi` product chooser, `describecomponents.cgi` | Big search box, a grid of product cards you can click anywhere on |
 | `buglist.cgi` | Full-width list with an honest result count (and Show all when BMO capped it), search chips with Edit, a sticky toolbar with an instant filter kept in the URL, Compact/Comfortable rows, Export/Save menus, severity stripes, `j`/`k`/Enter/`Shift+O`/`/` shortcuts, and in Change Several Bugs mode a selection bar with shift-click ranges and `x` |
-| `query.cgi?format=advanced` | Grouped cards, filter boxes for long lists, "N active" badges, sticky search bar |
+| `query.cgi?format=advanced` | Type, Severity and Priority next to Product and Status, filter boxes for the lists, "N active" badges on collapsed sections, and a sticky "Your search" rail listing every criterion (click to jump, × to remove) next to Sort and Search |
 | `query.cgi?format=specific` / `instant` | A search-engine style hero |
 | `request.cgi` | Collapsible filters, one card per group, relative ages, filter box and group jump |
 | `describecomponents.cgi?product=…` | Product header with quick actions, filterable component cards, A–Z jump |

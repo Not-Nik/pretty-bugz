@@ -120,51 +120,202 @@
   transform: rotate(-90deg);
 }
 
-/* Shared: sticky action bar */
+/* Advanced search: form and "Your search" rail */
 
-.pb-on.pb-layout .pb-actionbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px 16px;
+.pb-on.pb-layout .pb-query-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  align-items: start;
+  gap: 24px;
+}
+
+.pb-on.pb-layout .pb-query-rail {
   position: sticky;
-  bottom: 12px;
-  z-index: 20;
-  clear: both;
-  margin: 24px 0 12px;
+  top: calc(var(--global-header-height) + 16px);
+}
+
+.pb-on.pb-layout .pb-query-rail-card {
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--pb-border);
   border-radius: 12px;
-  padding: 10px 12px 10px 16px;
-  background-color: color-mix(in srgb, var(--pb-surface) 94%, transparent);
-  box-shadow: var(--pb-shadow-lg);
-  -webkit-backdrop-filter: saturate(180%) blur(14px);
-  backdrop-filter: saturate(180%) blur(14px);
+  padding: 14px 16px 16px;
+  max-height: calc(100vh - var(--global-header-height) - 32px);
+  box-sizing: border-box;
+  background-color: var(--pb-surface);
+  box-shadow: var(--pb-shadow);
 }
 
-.pb-on.pb-layout .pb-actionbar-start,
-.pb-on.pb-layout .pb-actionbar-end {
+.pb-on.pb-layout .pb-query-rail-title {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  min-width: 0;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
 }
 
-.pb-on.pb-layout .pb-actionbar-end {
-  margin-left: auto;
+.pb-on.pb-layout .pb-query-rail-list {
+  flex: 1 1 auto;
+  margin: 0 -8px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.pb-on.pb-layout .pb-query-criteria {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pb-on.pb-layout .pb-query-group {
+  margin: 10px 8px 2px;
+  color: var(--pb-text-3);
+  font-size: var(--font-size-x-small);
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.pb-on.pb-layout .pb-query-group:first-child {
+  margin-top: 0;
+}
+
+.pb-on.pb-layout .pb-query-criterion {
+  display: flex;
+  align-items: flex-start;
+  margin: 0;
+  border-radius: var(--pb-radius-sm);
+}
+
+.pb-on.pb-layout .pb-query-criterion:hover {
+  background-color: var(--pb-surface-2);
+}
+
+.pb-on.pb-layout button.pb-query-show {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 0;
+  padding: 5px 8px !important;
+  min-width: 0;
+  color: var(--pb-text);
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--font-size-small);
+  font-weight: normal;
+  text-align: left;
+}
+
+.pb-on.pb-layout .pb-query-label {
+  color: var(--pb-text-2);
+  font-size: var(--font-size-x-small);
+  font-weight: 600;
+}
+
+.pb-on.pb-layout .pb-query-value {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.pb-on.pb-layout button.pb-query-clear {
+  flex: none;
+  margin: 4px 4px 0 0;
+  border: 0;
+  border-radius: 50%;
+  padding: 0 !important;
+  width: 24px;
+  height: 24px;
+  color: var(--pb-text-3);
+  background: transparent;
+  box-shadow: none;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.pb-on.pb-layout button.pb-query-clear:hover {
+  color: var(--pb-danger);
+  background-color: var(--pb-danger-soft);
+}
+
+.pb-on.pb-layout .pb-query-empty {
+  margin: 0 8px;
+  color: var(--pb-text-2);
+  font-size: var(--font-size-small);
+}
+
+.pb-on.pb-layout .pb-query-empty[hidden] {
+  display: none;
+}
+
+.pb-on.pb-layout .pb-query-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  border-top: 1px solid var(--pb-border);
+  padding-top: 14px;
 }
 
 /* Block, not flex: BMO's loose text ("Sort results by :", "&nbsp;") would become spaced-out items. */
-.pb-on.pb-layout .pb-actionbar p {
+.pb-on.pb-layout .pb-query-actions p {
   margin: 0;
   color: var(--pb-text-2);
   font-size: var(--font-size-small);
 }
 
-/* Keep fields reached by Tab clear of the sticky action bar. */
-:root.pb-on.pb-layout:has(body.pb-query-advanced) {
-  scroll-padding-bottom: 96px;
+.pb-on.pb-layout .pb-query-actions #Search {
+  padding-block: 9px !important;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Narrow: the rail becomes a bar pinned to the bottom with just the actions. */
+@media (width < 1000px) {
+  .pb-on.pb-layout .pb-query-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pb-on.pb-layout .pb-query-rail {
+    top: auto;
+    bottom: 0;
+    z-index: 20;
+  }
+
+  .pb-on.pb-layout .pb-query-rail-card {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    border-radius: 12px 12px 0 0;
+    padding: 10px 12px;
+    box-shadow: var(--pb-shadow-lg);
+  }
+
+  .pb-on.pb-layout .pb-query-rail-title {
+    margin: 0;
+    font-size: var(--font-size-medium);
+  }
+
+  .pb-on.pb-layout .pb-query-rail-list,
+  .pb-on.pb-layout .pb-query-actions p:has(#remasdefault),
+  .pb-on.pb-layout .pb-query-actions p:has(a[href*="nukedefaultquery"]) {
+    display: none;
+  }
+
+  .pb-on.pb-layout .pb-query-actions {
+    flex-direction: row;
+    align-items: center;
+    margin: 0 0 0 auto;
+    border: 0;
+    padding: 0;
+  }
+
+  .pb-on.pb-layout .pb-query-actions #Search {
+    width: auto;
+  }
 }
 
 /* Search tabs (all query.cgi formats) */
@@ -760,10 +911,5 @@
     flex: 1 1 100%;
     width: 100%;
     max-width: none;
-  }
-
-  /* On narrow screens the wrapped bar would cover too much of the form. */
-  .pb-on.pb-layout .pb-actionbar {
-    position: static;
   }
 }
