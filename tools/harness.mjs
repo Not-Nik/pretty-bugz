@@ -26,7 +26,9 @@ const CHROME = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/M
 
 // Pages used by `fetch` and `undo-all`. The harness serves each fixture at its `url`.
 const PAGES = [
-  { name: "bug.html", url: "/show_bug.cgi?id=1000000", expect: null },
+  { name: "bug.html", url: "/show_bug.cgi?id=1000000", expect: "bug" },
+  { name: "bug.html", label: "bug.html (logged in)", url: "/show_bug.cgi?id=1000000", setup: "bug-logged-in.js", expect: "bug" },
+  { name: "bug.html", label: "bug.html (editing)", url: "/show_bug.cgi?id=1000000&edit", setup: "bug-logged-in.js", expect: "bug" },
   { name: "home.html", url: "/home", expect: null },
   { name: "product-chooser.html", url: "/describecomponents.cgi", expect: null },
   { name: "query-advanced.html", url: "/query.cgi?format=advanced", expect: "advanced-search" },
@@ -49,7 +51,7 @@ const PAGES = [
 // Store screenshots for addons.mozilla.org (see store/listing.md for captions).
 const SCREENSHOTS = [
   { out: "1-buglist.png", fixture: "buglist.html", extra: "buglist-select.js" },
-  { out: "2-bug-dark.png", fixture: "bug.html", theme: "dark" },
+  { out: "2-bug-dark.png", fixture: "bug.html", theme: "dark", extra: "bug-logged-in.js" },
   { out: "3-new-bug.png", fixture: "enter-bug.mock.html", extra: "enter-bug-filled.js" },
   { out: "4-attention.png", fixture: "page-attention.html" },
   { out: "5-advanced-search.png", fixture: "query-advanced.html" },
@@ -159,7 +161,7 @@ async function chromeDom(url, budget = 8000) {
 
 async function shot(fixtureName, args) {
   const out = resolve(args.out ?? join(OUT, fixtureName.replace(/\.html$/, ".png")));
-  const extra = args.extra ? readFileSync(args.extra, "utf8") : "";
+  const extra = readExtras(args.extra);
   const html = buildPage(fixturePath(fixtureName), { theme: args.theme, layouts: args.layouts !== false, extra });
   mkdirSync(dirname(out), { recursive: true });
   await withPage(html, pagePath(fixtureName, args.query), async (url) => {
@@ -181,15 +183,20 @@ async function runScript(fixtureName, { extra, id, query, theme, layouts }) {
   return match ? match[1].replace(/&quot;/g, "\"").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").trim() : "NO RESULT";
 }
 
-function undo(fixtureName, query) {
-  const extra = readFileSync(join(ROOT, "tools", "undo-test.js"), "utf8");
+// --extra takes a comma-separated list; scripts run in order at the end of <body>.
+function readExtras(list) {
+  return (list ?? "").split(",").filter(Boolean).map((file) => readFileSync(file, "utf8")).join("\n;\n");
+}
+
+function undo(fixtureName, query, setup) {
+  const extra = [setup && readExtras(join(ROOT, "tools", "extras", setup)), readFileSync(join(ROOT, "tools", "undo-test.js"), "utf8")].filter(Boolean).join("\n;\n");
   return runScript(fixtureName, { extra, id: "pb-undo-result", query, layouts: false });
 }
 
 async function fetchFixtures() {
   mkdirSync(FIXTURES, { recursive: true });
   for (const page of PAGES) {
-    if (page.local) continue;
+    if (page.local || page.setup) continue;
     const target = join(FIXTURES, page.name);
     let html;
     if (page.chrome) {
@@ -223,14 +230,14 @@ if (command === "fetch") {
 } else if (command === "undo" && fixture) {
   console.log(await undo(fixture, args.query));
 } else if (command === "probe" && fixture && args.extra) {
-  console.log(await runScript(fixture, { extra: readFileSync(args.extra, "utf8"), id: "pb-probe", query: args.query, theme: args.theme, layouts: args.layouts !== false }));
+  console.log(await runScript(fixture, { extra: readExtras(args.extra), id: "pb-probe", query: args.query, theme: args.theme, layouts: args.layouts !== false }));
 } else if (command === "undo-all") {
   let failed = false;
   for (const page of PAGES) {
-    const result = await undo(page.name);
+    const result = await undo(page.name, page.url && new URL(page.url, BMO).search, page.setup);
     const ok = page.expect ? result === `${page.expect}: changed=true restored=true` : result === "no layouts matched";
     failed ||= !ok;
-    console.log(`${ok ? "ok  " : "FAIL"} ${page.name.padEnd(28)} ${result}`);
+    console.log(`${ok ? "ok  " : "FAIL"} ${(page.label ?? page.name).padEnd(28)} ${result}`);
   }
   process.exitCode = failed ? 1 : 0;
 } else if (command === "screenshots") {

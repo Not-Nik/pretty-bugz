@@ -1,0 +1,219 @@
+/* show_bug.cgi workspace (content/layouts/bug.js) */
+
+.pb-on.pb-layout .pb-bug #main-inner {
+  max-width: 1440px;
+}
+
+.pb-on.pb-layout .pb-bug-sentinel {
+  height: 0;
+}
+
+/* Sticky bar: summary on the left, BMO's toolbar on the right. */
+
+.pb-on.pb-layout .pb-bug-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "summary toolbar" "error error";
+  align-items: start;
+  gap: 0 16px;
+  position: sticky;
+  top: var(--global-header-height);
+  z-index: 25;
+  margin: 0 -24px 16px;
+  border-bottom: 1px solid transparent;
+  padding: 8px 24px;
+  background-color: var(--pb-bg);
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.pb-on.pb-layout .pb-bug-bar.pb-bug-stuck {
+  border-bottom-color: var(--pb-border);
+  box-shadow: 0 6px 12px -10px var(--pb-shadow-color);
+}
+
+.pb-on.pb-layout .pb-bug-bar.pb-bug-editing {
+  position: static;
+}
+
+.pb-on.pb-layout .pb-bug-bar > #page-toolbar {
+  grid-area: toolbar;
+  margin: 4px 0 0;
+}
+
+.pb-on.pb-layout .pb-bug-bar > #io-error {
+  grid-area: error;
+}
+
+.pb-on.pb-layout .pb-bug-bar > section.module {
+  grid-area: summary;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pb-on.pb-layout .pb-bug-bar > section.module > .module-content {
+  padding: 0;
+}
+
+.pb-on.pb-layout .pb-bug-bar #summary-container {
+  padding: 0;
+}
+
+.pb-on.pb-layout .pb-bug-bar #summary-container .field.indent {
+  padding-inline: 0;
+}
+
+.pb-on.pb-layout .pb-bug-bar #field-value-short_desc {
+  margin: 2px 0 0;
+  font-size: 24px;
+}
+
+/* Stuck: one line of title, no time labels. */
+.pb-on.pb-layout .pb-bug-stuck:not(.pb-bug-editing) :is(.bug-time-labels, #field-value-bug_id .edit-hide) {
+  display: none;
+}
+
+.pb-on.pb-layout .pb-bug-stuck:not(.pb-bug-editing) #field-value-short_desc {
+  overflow: hidden;
+  font-size: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pb-on.pb-layout .pb-bug-stuck:not(.pb-bug-editing) #field-status_summary {
+  margin-bottom: 0;
+}
+
+/* Two columns: main (comments) on the left, the rail (fields) on the right. */
+
+.pb-on.pb-layout .pb-bug-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  align-items: start;
+  gap: 24px;
+}
+
+.pb-on.pb-layout .pb-bug-layout.pb-bug-editing {
+  grid-template-columns: minmax(0, 1fr) 480px;
+}
+
+.pb-on.pb-layout .pb-bug-main {
+  grid-row: 1;
+  grid-column: 1;
+  min-width: 0;
+}
+
+.pb-on.pb-layout .pb-bug-rail {
+  grid-row: 1;
+  grid-column: 2;
+  min-width: 0;
+}
+
+.pb-on.pb-layout .pb-bug-layout.pb-bug-rail-fits:not(.pb-bug-editing) > .pb-bug-rail {
+  position: sticky;
+  top: calc(var(--global-header-height) + var(--pb-bug-bar-height, 80px) + 16px);
+}
+
+.pb-on.pb-layout .pb-bug-main > :first-child,
+.pb-on.pb-layout .pb-bug-rail > :first-child {
+  margin-top: 0;
+}
+
+/* Rail modules: one column of fields with short labels. */
+
+.pb-on.pb-layout .pb-bug-rail > .module {
+  margin: 0 0 12px;
+}
+
+.pb-on.pb-layout .pb-bug-rail .module .fields-lhs,
+.pb-on.pb-layout .pb-bug-rail .module .fields-rhs {
+  width: 100%;
+  min-width: 0;
+}
+
+.pb-on.pb-layout .pb-bug-rail .module .field .name {
+  padding-right: 8px;
+  width: 92px;
+  min-width: 92px;
+  text-align: left;
+}
+
+.pb-on.pb-layout .pb-bug-rail .module .field .value {
+  overflow-wrap: anywhere;
+}
+
+.pb-on.pb-layout .pb-bug-rail .module :is(input[type="text"], select, textarea):not([size]) {
+  max-width: 100%;
+}
+
+/* Main column */
+
+.pb-on.pb-layout .pb-bug-main > .module {
+  margin: 0 0 16px;
+}
+
+/* History-only entries (no comment) become one quiet line in the timeline. */
+.pb-on.pb-layout .pb-bug-main .change-set:not(:has(> .comment)) {
+  margin-top: 8px;
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.pb-on.pb-layout .pb-bug-main .change-set:not(:has(> .comment)) > .change > .change-head {
+  border-bottom: 0;
+  padding-block: 4px;
+  background: transparent;
+}
+
+.pb-on.pb-layout .pb-bug-main .change-set:not(:has(> .comment)) > .activity {
+  border: 0;
+  padding: 0 14px 4px 58px;
+  background: transparent;
+}
+
+.pb-on.pb-layout .pb-bug-main .change-set:not(:has(> .comment)) .gravatar {
+  width: 20px;
+  height: 20px;
+}
+
+/* Narrow: one column in BMO's order (fields, then comments). */
+
+@media (width < 1100px) {
+  .pb-on.pb-layout .pb-bug-layout,
+  .pb-on.pb-layout .pb-bug-layout.pb-bug-editing {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pb-on.pb-layout .pb-bug-rail {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .pb-on.pb-layout .pb-bug-main {
+    grid-row: 2;
+  }
+
+  .pb-on.pb-layout .pb-bug-layout.pb-bug-rail-fits:not(.pb-bug-editing) > .pb-bug-rail {
+    position: static;
+  }
+
+  .pb-on.pb-layout .pb-bug-rail .module .fields-lhs,
+  .pb-on.pb-layout .pb-bug-rail .module .fields-rhs {
+    width: 50%;
+  }
+}
+
+@media (width < 800px) {
+  .pb-on.pb-layout .pb-bug-bar {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "toolbar" "summary" "error";
+    position: static;
+  }
+
+  .pb-on.pb-layout .pb-bug-rail .module .fields-lhs,
+  .pb-on.pb-layout .pb-bug-rail .module .fields-rhs {
+    width: 100%;
+  }
+}

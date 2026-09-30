@@ -31,6 +31,7 @@ Pretty Bugz gives bugzilla.mozilla.org a clean, modern look and rebuilds its bus
 - Readable comments, status pills and tidy form controls on every bug
 
 **Redesigned pages** (can be turned off separately)
+- **Bugs:** a sticky bar with the status, summary and actions, the fields in a side rail next to the comments, and one-line history entries
 - **File a bug:** the essentials on one page, optional fields tucked under "More fields", and a sticky checklist that shows what's still required next to the Submit button
 - **Bug lists:** result count and search terms up top, a sticky toolbar, instant row filtering, Export and Save menus, and j/k keyboard navigation
 - **Advanced search:** grouped cards, filter boxes for long product and component lists, "N active" badges and a sticky search bar

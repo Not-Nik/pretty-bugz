@@ -16,6 +16,7 @@ A Firefox extension that gives [bugzilla.mozilla.org](https://bugzilla.mozilla.o
 
 | Page | What changes |
 | --- | --- |
+| `show_bug.cgi` | A workspace: a sticky bar with status, summary and actions (plus a Comment shortcut), the fields in a right-hand rail, and the description, attachments and comments in the main column; history-only entries shrink to one line |
 | `enter_bug.cgi` | One page: essentials first (Summary, Category, Description, Attachment, Security), optional modules under "More fields", and a sticky rail with a section checklist, live summary and Submit |
 | `enter_bug.cgi` product chooser, `describecomponents.cgi` | Big search box, a grid of product cards you can click anywhere on |
 | `buglist.cgi` | Result count and search chips, sticky toolbar, instant row filter, Export/Save menus, `j`/`k`/`o`/`/` shortcuts |

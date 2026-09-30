@@ -31,6 +31,7 @@
       "css": [
         "content/theme.css",
         "content/layouts.css",
+        "content/layouts/bug.css",
         "content/layouts/enter-bug.css",
         "content/layouts/buglist.css",
         "content/layouts/requests.css",
@@ -43,6 +44,7 @@
       ],
       "js": [
         "content/lib.js",
+        "content/layouts/bug.js",
         "content/layouts/query.js",
         "content/layouts/enter-bug.js",
         "content/layouts/buglist.js",
