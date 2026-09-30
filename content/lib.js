@@ -26,7 +26,8 @@ globalThis.PrettyBugz = (() => {
       const marker = document.createComment("pretty-bugz");
       node.parentNode.insertBefore(marker, node);
       parent.insertBefore(node, before);
-      this.#undos.push(() => marker.replaceWith(node));
+      // BMO sometimes removes elements itself (e.g. Watch buttons for logged-out users); don't resurrect them.
+      this.#undos.push(() => (node.isConnected ? marker.replaceWith(node) : marker.remove()));
       return node;
     }
 
@@ -44,13 +45,26 @@ globalThis.PrettyBugz = (() => {
     }
 
     addClass(node, ...classes) {
-      const hadAttribute = node.hasAttribute("class");
+      const original = node.getAttribute("class");
       const added = classes.filter((c) => !node.classList.contains(c));
+      if (!added.length) return;
       node.classList.add(...added);
       this.#undos.push(() => {
         node.classList.remove(...added);
-        if (!hadAttribute && !node.classList.length) node.removeAttribute("class");
+        // classList re-serializes the attribute; put BMO's original whitespace back if nothing else changed.
+        const unchanged = original == null ? !node.classList.length : node.className === original.split(/\s+/).filter(Boolean).join(" ");
+        if (!unchanged) return;
+        if (original == null) node.removeAttribute("class");
+        else node.setAttribute("class", original);
       });
+    }
+
+    // Sets (or with null, removes) an attribute on a BMO element and restores the old value on undo.
+    attr(node, name, value) {
+      const old = node.getAttribute(name);
+      if (value == null) node.removeAttribute(name);
+      else node.setAttribute(name, value);
+      this.#undos.push(() => (old == null ? node.removeAttribute(name) : node.setAttribute(name, old)));
     }
 
     listen(target, type, handler, options) {

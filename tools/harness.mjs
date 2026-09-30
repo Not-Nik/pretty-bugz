@@ -3,14 +3,15 @@
 // then screenshots them with headless Firefox or checks that layouts undo cleanly.
 //
 //   node tools/harness.mjs fetch
-//   node tools/harness.mjs shot  <fixture> [--out name.png] [--size 1400,1000] [--theme light|dark|auto] [--no-layouts] [--query "?id=x.html"] [--extra script.js]
+//   node tools/harness.mjs shot  <fixture> [--out name.png] [--size 1400,1000] [--theme light|dark|auto] [--os light|dark] [--no-layouts] [--query "?id=x.html"] [--extra script.js]
 //   node tools/harness.mjs undo  <fixture> [--query "?id=x.html"]
 //   node tools/harness.mjs undo-all
+//   node tools/harness.mjs probe <fixture> --extra script.js [--theme …] [--no-layouts] [--query …]   (prints the text of #pb-probe)
 //   node tools/harness.mjs screenshots
 
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -93,8 +94,9 @@ function buildPage(fixture, { theme = "auto", layouts = true, extra = "" } = {})
   const freeze = "*,*::before,*::after{animation:none!important;transition:none!important}";
 
   let html = readFileSync(fixture, "utf8");
-  html = html.replace(/<head[^>]*>/i, (m) => `${m}\n<base href="${BMO}/">\n${scripts}\n<style>${styles}</style>`);
-  html = html.replace(/<\/head>/i, `<style>${fontFace}${freeze}</style></head>`);
+  // Firefox cascades content-script CSS after the page's own sheets, so ties go to us.
+  html = html.replace(/<head[^>]*>/i, (m) => `${m}\n<base href="${BMO}/">\n${scripts}`);
+  html = html.replace(/<\/head>/i, `<style>${styles}</style><style>${fontFace}${freeze}</style></head>`);
   if (extra) html = html.replace(/<\/body>/i, `<script>${extra}</script></body>`);
   return html;
 }
@@ -112,14 +114,17 @@ function serve() {
   return new Promise((ok) => server.listen(0, "127.0.0.1", () => ok(server)));
 }
 
-async function withPage(name, html, query, fn) {
+async function withPage(prefix, html, query, fn) {
   mkdirSync(OUT, { recursive: true });
+  // Unique per process so parallel runs of the same fixture don't overwrite each other.
+  const name = `${prefix}-${process.pid}.html`;
   writeFileSync(join(OUT, name), html);
   const server = await serve();
   try {
     return await fn(`http://127.0.0.1:${server.address().port}/${name}${query ?? ""}`);
   } finally {
     server.close();
+    rmSync(join(OUT, name), { force: true });
   }
 }
 
@@ -153,9 +158,11 @@ async function shot(fixtureName, args) {
   const out = resolve(args.out ?? join(OUT, fixtureName.replace(/\.html$/, ".png")));
   const extra = args.extra ? readFileSync(args.extra, "utf8") : "";
   const html = buildPage(fixturePath(fixtureName), { theme: args.theme, layouts: args.layouts !== false, extra });
-  await withPage(`shot-${basename(fixtureName)}`, html, args.query, async (url) => {
+  await withPage(`shot-${basename(fixtureName, ".html")}`, html, args.query, async (url) => {
     const profile = mkdtempSync(join(tmpdir(), "pb-firefox-"));
-    copyFileSync(join(ROOT, "tools", "firefox-user.js"), join(profile, "user.js"));
+    let prefs = readFileSync(join(ROOT, "tools", "firefox-user.js"), "utf8");
+    if (args.os === "dark") prefs = prefs.replace("systemUsesDarkTheme\", 0", "systemUsesDarkTheme\", 1").replace("content-override\", 1", "content-override\", 0");
+    writeFileSync(join(profile, "user.js"), prefs);
     rmSync(out, { force: true });
     await run(FIREFOX, ["--headless", "--no-remote", "-profile", profile, `--window-size=${args.size ?? "1400,1000"}`, "--screenshot", out, url], { timeout: 90000 });
     rmSync(profile, { recursive: true, force: true });
@@ -163,12 +170,16 @@ async function shot(fixtureName, args) {
   console.log(existsSync(out) ? out : `screenshot failed: ${out}`);
 }
 
-async function undo(fixtureName, query) {
-  const extra = readFileSync(join(ROOT, "tools", "undo-test.js"), "utf8");
-  const html = buildPage(fixturePath(fixtureName), { layouts: false, extra });
-  const dom = await withPage(`undo-${basename(fixtureName)}`, html, query, (url) => chromeDom(url));
-  const match = dom.match(/id="pb-undo-result"[^>]*>([^<]*)/);
+async function runScript(fixtureName, { extra, id, query, theme, layouts }) {
+  const html = buildPage(fixturePath(fixtureName), { theme, layouts, extra });
+  const dom = await withPage(`${id}-${basename(fixtureName, ".html")}`, html, query, (url) => chromeDom(url));
+  const match = dom.match(new RegExp(`id="${id}"[^>]*>([^<]*)`));
   return match ? match[1].replace(/&quot;/g, "\"").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").trim() : "NO RESULT";
+}
+
+function undo(fixtureName, query) {
+  const extra = readFileSync(join(ROOT, "tools", "undo-test.js"), "utf8");
+  return runScript(fixtureName, { extra, id: "pb-undo-result", query, layouts: false });
 }
 
 async function fetchFixtures() {
@@ -207,6 +218,8 @@ if (command === "fetch") {
   await shot(fixture, args);
 } else if (command === "undo" && fixture) {
   console.log(await undo(fixture, args.query));
+} else if (command === "probe" && fixture && args.extra) {
+  console.log(await runScript(fixture, { extra: readFileSync(args.extra, "utf8"), id: "pb-probe", query: args.query, theme: args.theme, layouts: args.layouts !== false }));
 } else if (command === "undo-all") {
   let failed = false;
   for (const page of PAGES) {
