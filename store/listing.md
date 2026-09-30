@@ -39,9 +39,6 @@ Pretty Bugz gives bugzilla.mozilla.org a clean, modern look and rebuilds its bus
 - **Request queue, components, keywords, bug history, user profiles and help pages:** regroupable request lists sorted by age, filterable component and keyword lists, a compact change log with per-field history, stats tiles and tables of contents
 - **Instant search:** see all matches or file the bug straight from the summary you typed
 
-**Private by design**
-Pretty Bugz only runs on bugzilla.mozilla.org, collects no data, makes no network requests of its own and stores nothing but your three settings, on your device only.
-
 Pretty Bugz is an independent project and is not affiliated with Mozilla.
 ```
 
