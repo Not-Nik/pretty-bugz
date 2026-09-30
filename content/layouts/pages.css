@@ -525,12 +525,8 @@
   outline-offset: -2px;
 }
 
-.pb-on.pb-layout .pb-at-list.pb-at-empty {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: none;
-  background-color: transparent;
+.pb-on.pb-layout .pb-at-list[hidden] {
+  display: none;
 }
 
 .pb-on.pb-layout .pb-at-list .bug-list-header {
@@ -574,9 +570,15 @@
 
 .pb-on.pb-layout .pb-at-clear {
   margin: 0;
-  padding: 0 14px;
-  color: var(--pb-success);
+  border: 1px dashed var(--pb-border-strong);
+  border-radius: var(--pb-radius);
+  padding: 10px 14px;
+  color: var(--pb-text-2);
   font-size: var(--font-size-small);
+}
+
+.pb-on.pb-layout .pb-at-clear strong {
+  color: var(--pb-success);
 }
 
 .pb-on.pb-layout .pb-at-list table.bug-list {

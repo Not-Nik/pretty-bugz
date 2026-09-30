@@ -241,13 +241,17 @@
       const overview = h("nav", { class: "pb-at-overview", "aria-label": "Summary" });
       changes.insert(overview, root, (note ?? hero).nextSibling);
 
+      // Most lists are empty for most people: those fold into one "All clear" line per tier and
+      // get no tile, so what's left is what needs attention.
       let tier = null;
       let tierIndex = -1;
       let listIndex = 0;
+      const empties = new Map();
       for (const node of $$(":scope > h2, :scope > .task-desc, :scope > .bug-list-header", root)) {
         if (node.matches("h2")) {
           tierIndex++;
           tier = h("section", { class: `pb-at-tier pb-at-tier-${Math.min(tierIndex, 3)}` }, h("div", { class: "pb-at-tier-head" }), h("div", { class: "pb-at-lists" }));
+          empties.set(tier, []);
           changes.insert(tier, root, node);
           changes.move(node, tier.firstChild);
           continue;
@@ -261,12 +265,14 @@
         const table = node.nextElementSibling?.matches("table.bug-list") ? node.nextElementSibling : null;
         const count = Number(clean($(".bug-list-count", node)?.textContent ?? "0").replace(/[^\d]/g, "")) || 0;
         const name = clean($(".bug-list-title", node)?.textContent ?? "");
-        const card = h("section", { class: `pb-at-list${count ? "" : " pb-at-empty"}`, id: `pb-at-list-${listIndex++}` });
+        const card = h("section", { class: `pb-at-list${count ? "" : " pb-at-empty"}`, id: `pb-at-list-${listIndex++}`, hidden: !count });
         tier.lastChild.append(card);
         changes.move(node, card);
         if (table) changes.move(table, card);
-
-        if (!count) card.append(h("p", { class: "pb-at-clear", text: "Nothing here — all clear." }));
+        if (!count) {
+          empties.get(tier).push(name);
+          continue;
+        }
 
         for (const cell of table ? table.querySelectorAll("td.status, td.priority, td.severity") : []) {
           const value = clean(cell.textContent).toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -287,10 +293,15 @@
           card.append(more);
         }
 
-        overview.append(h("a", { class: `pb-at-tile pb-at-tier-${Math.min(tierIndex, 3)}${count ? "" : " pb-at-zero"}`, href: `#${card.id}` },
+        overview.append(h("a", { class: `pb-at-tile pb-at-tier-${Math.min(tierIndex, 3)}`, href: `#${card.id}` },
           h("span", { class: "pb-at-tile-count", text: count.toLocaleString() }),
           h("span", { class: "pb-at-tile-label", text: name })));
       }
+
+      for (const [section, names] of empties) {
+        if (names.length) section.lastChild.append(h("p", { class: "pb-at-clear" }, h("strong", { text: "All clear: " }), names.join(", ")));
+      }
+      if (!overview.children.length) overview.append(h("p", { class: "pb-at-clear", text: "Nothing needs your attention right now." }));
     },
   });
 

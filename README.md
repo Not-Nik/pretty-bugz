@@ -27,7 +27,7 @@ A Firefox extension that gives [bugzilla.mozilla.org](https://bugzilla.mozilla.o
 | `show_activity.cgi` | A compact day-grouped change log with field chips, person filter, Hide CC, Newest first, a value history for a single field (e.g. P3 → P2 → P1), and the filter kept in the URL |
 | `describekeywords.cgi` | A dense, filterable keyword table with sortable Keyword and Bugs columns and an Include inactive switch |
 | `user_profile` | Profile header, stats tiles, activity-by-product bars |
-| `page.cgi?id=attention.html` | A triage dashboard: counts per list, priority tiers, collapsed empty lists |
+| `page.cgi?id=attention.html` | A triage dashboard: count tiles only for lists that have bugs, priority tiers, and empty lists folded into one "All clear" line per tier |
 | `page.cgi` help pages | Readable articles with a sticky table of contents |
 | `page.cgi?id=custom_forms.html` | A card grid of custom bug forms |
 | `page.cgi` reports (user activity, triage, release tracking, group members, …) | A page title, the form as a wrapping filter bar and the results as a card |
