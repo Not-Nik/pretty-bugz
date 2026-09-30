@@ -6,7 +6,7 @@
 
 .pb-on.pb-layout .pb-ac-view {
   margin: 8px auto 48px;
-  max-width: 880px;
+  max-width: 1080px;
 }
 
 .pb-on.pb-layout .pb-ac-hero {
@@ -126,7 +126,7 @@
   font-weight: 600;
 }
 
-.pb-on.pb-layout .pb-ac-hide-cc {
+.pb-on.pb-layout .pb-ac-option {
   display: inline-flex;
   align-items: center;
   color: var(--pb-text-2);
@@ -142,22 +142,80 @@
   gap: 10px;
 }
 
+/* A fixed width, so the chips don't reflow when "142 edits" becomes "6 of 142 edits". */
+.pb-on.pb-layout .pb-ac-toolbar-end .pb-filter-count {
+  min-width: 8.5em;
+  text-align: right;
+}
+
 .pb-on.pb-layout .pb-ac-who-filter {
   max-width: 200px;
 }
 
-/* Timeline */
+/* One field's values over time */
 
-.pb-on.pb-layout .pb-ac-timeline {
-  position: relative;
-  padding-left: 0;
+.pb-on.pb-layout .pb-ac-history {
+  margin: 12px 0 4px;
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-radius);
+  padding: 12px 16px;
+  background-color: var(--pb-surface);
 }
+
+.pb-on.pb-layout .pb-ac-history[hidden] {
+  display: none;
+}
+
+.pb-on.pb-layout .pb-ac-history-title {
+  margin: 0 0 8px;
+  color: var(--pb-text-2);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+.pb-on.pb-layout .pb-ac-history-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pb-on.pb-layout .pb-ac-history-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.pb-on.pb-layout .pb-ac-history-steps li > span {
+  border-radius: 999px;
+  padding: 2px 10px;
+  color: var(--pb-text);
+  background-color: var(--pb-surface-3);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+.pb-on.pb-layout .pb-ac-history-steps li:last-child > span {
+  color: var(--pb-accent);
+  background-color: var(--pb-accent-soft);
+}
+
+.pb-on.pb-layout .pb-ac-history-steps li + li::before {
+  content: "→" / "";
+  color: var(--pb-text-3);
+}
+
+/* Log */
 
 .pb-on.pb-layout .pb-ac-day {
   position: sticky;
   top: calc(var(--global-header-height) + var(--pb-ac-toolbar-height, 56px) + 8px);
   z-index: 5;
-  margin: 20px 0 8px;
+  margin: 20px 0 6px;
   width: fit-content;
   border: 1px solid var(--pb-border);
   border-radius: 999px;
@@ -169,63 +227,43 @@
   letter-spacing: .02em;
 }
 
-.pb-on.pb-layout .pb-ac-day[hidden],
-.pb-on.pb-layout .pb-ac-card[hidden],
-.pb-on.pb-layout .pb-ac-change[hidden] {
+.pb-on.pb-layout :is(.pb-ac-day, .pb-ac-list, .pb-ac-entry, .pb-ac-change)[hidden] {
   display: none;
 }
 
-.pb-on.pb-layout .pb-ac-card {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
-  gap: 12px;
-  position: relative;
-  padding: 0 0 14px;
-}
-
-/* The vertical rail connecting avatars. */
-.pb-on.pb-layout .pb-ac-card::before {
-  content: "";
-  position: absolute;
-  top: 34px;
-  bottom: 0;
-  left: 15px;
-  width: 2px;
-  background-color: var(--pb-border);
-}
-
-.pb-on.pb-layout .pb-ac-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  color: light-dark(hsl(var(--pb-hue) 55% 30%), hsl(var(--pb-hue) 70% 80%));
-  background-color: light-dark(hsl(var(--pb-hue) 70% 90%), hsl(var(--pb-hue) 35% 25%));
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.pb-on.pb-layout .pb-ac-body {
+.pb-on.pb-layout .pb-ac-list {
+  margin: 0;
   border: 1px solid var(--pb-border);
   border-radius: var(--pb-radius);
+  padding: 0;
   background-color: var(--pb-surface);
   box-shadow: var(--pb-shadow);
+  list-style: none;
 }
 
-.pb-on.pb-layout .pb-ac-head {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  border-bottom: 1px solid var(--pb-border);
-  padding: 8px 14px;
+.pb-on.pb-layout .pb-ac-entry {
+  display: grid;
+  grid-template-columns: 52px 190px minmax(0, 1fr);
+  gap: 12px;
+  margin: 0;
+  border-top: 1px solid var(--pb-border);
+  padding: 6px 14px;
   font-size: var(--font-size-small);
+  line-height: 1.5;
 }
 
-.pb-on.pb-layout .pb-ac-who {
-  color: var(--pb-text);
+.pb-on.pb-layout .pb-ac-entry:first-child {
+  border-top: 0;
+}
+
+/* Consecutive edits by the same person: one block, name shown once. */
+.pb-on.pb-layout .pb-ac-entry.pb-ac-same {
+  border-top-color: transparent;
+  padding-top: 0;
+}
+
+.pb-on.pb-layout .pb-ac-entry.pb-ac-same .pb-ac-who {
+  visibility: hidden;
 }
 
 .pb-on.pb-layout .pb-ac-when {
@@ -233,33 +271,53 @@
   font-variant-numeric: tabular-nums;
 }
 
-.pb-on.pb-layout .pb-ac-ago {
-  color: var(--pb-text-3);
+.pb-on.pb-layout .pb-ac-who {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  color: var(--pb-text);
+  font-weight: 600;
+}
+
+.pb-on.pb-layout .pb-ac-name {
+  overflow-wrap: anywhere;
+}
+
+.pb-on.pb-layout .pb-ac-avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  color: light-dark(hsl(var(--pb-hue) 55% 30%), hsl(var(--pb-hue) 70% 80%));
+  background-color: light-dark(hsl(var(--pb-hue) 70% 90%), hsl(var(--pb-hue) 35% 25%));
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .pb-on.pb-layout a.pb-ac-ref {
+  color: var(--pb-link);
   font-weight: 500;
 }
 
 .pb-on.pb-layout .pb-ac-changes {
   margin: 0;
-  padding: 4px 0;
+  padding: 0;
   list-style: none;
 }
 
 .pb-on.pb-layout .pb-ac-change {
   display: grid;
-  grid-template-columns: minmax(110px, 160px) minmax(0, 1fr);
+  grid-template-columns: minmax(110px, 180px) minmax(0, 1fr);
   gap: 12px;
   margin: 0;
-  padding: 6px 14px;
-  font-size: var(--font-size-small);
-  line-height: 1.5;
 }
 
 .pb-on.pb-layout .pb-ac-field {
   color: var(--pb-text-2);
-  font-weight: 600;
 }
 
 .pb-on.pb-layout .pb-ac-values {
@@ -272,7 +330,7 @@
 
 .pb-on.pb-layout .pb-ac-value {
   border-radius: 4px;
-  padding: 1px 6px;
+  padding: 0 6px;
   overflow-wrap: anywhere;
 }
 
@@ -312,9 +370,21 @@
     flex-direction: column;
   }
 
+  .pb-on.pb-layout .pb-ac-toolbar-end {
+    flex-wrap: wrap;
+  }
+
+  .pb-on.pb-layout .pb-ac-entry {
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+
+  .pb-on.pb-layout .pb-ac-changes {
+    grid-column: 1 / -1;
+  }
+
   .pb-on.pb-layout .pb-ac-change {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2px;
+    grid-template-columns: minmax(80px, 120px) minmax(0, 1fr);
+    gap: 8px;
   }
 
   .pb-on.pb-layout .pb-ac-day {

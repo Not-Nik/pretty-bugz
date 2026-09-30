@@ -1,8 +1,9 @@
 "use strict";
 
-// request.cgi (flag request queue): filters folded into a collapsible panel, each group as a
-// card of readable request rows (bug first, then who/what/when with relative ages), plus an
-// instant filter and a group jump menu.
+// request.cgi (flag request queue): filters folded into a collapsible panel and every request as
+// a readable row (bug first, then flag/who/where with ages), oldest first. Grouping is chosen on
+// the page (none, requestee, requester, flag, product) with a sticky rail of groups and counts,
+// plus an instant filter.
 (() => {
   const { h, register, parseTime } = globalThis.PrettyBugz;
 
@@ -10,6 +11,9 @@
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const clean = (text) => text.replace(/\s+/g, " ").trim();
   const STATUSES = ["UNCONFIRMED", "NEW", "ASSIGNED", "REOPENED", "RESOLVED", "VERIFIED", "CLOSED"];
+  const KEYS = ["Requestee", "Requester", "Flag", "Product/Component"];
+  const FACT_LABELS = { Flag: "Flag", Requester: "From", Requestee: "To", "Product/Component": "In" };
+  const GROUP_LABELS = { "": "None", Requestee: "Requestee", Requester: "Requester", Flag: "Flag", "Product/Component": "Product" };
 
   function relativeAge(date) {
     const days = (Date.now() - date.getTime()) / 86400000;
@@ -28,7 +32,16 @@
     return { name: name || value, nick, full: value };
   }
 
-  function buildItem(row, headers) {
+  function fact(label, text) {
+    const who = label === "Requester" || label === "Requestee" ? person(text) : null;
+    return h("span", { class: "pb-rq-fact", "data-key": label, title: who?.full ?? text },
+      h("span", { class: "pb-rq-fact-label", text: FACT_LABELS[label] }),
+      who ? `${who.name}${who.nick ? ` (:${who.nick})` : ""}` : text);
+  }
+
+  // BMO leaves the grouped column out of each table and puts it in the <h3> instead; take it from
+  // there so every request knows all four values and can be regrouped.
+  function buildItem(row, headers, heading) {
     const cells = [...row.cells];
     const cell = (label) => cells[headers.indexOf(label)];
     const bugLink = $("a[href*='show_bug.cgi']", cell("Bug") ?? row);
@@ -45,17 +58,13 @@
       if (value && value !== "--") pills.append(h("span", { class: "pb-rq-pill", text: value }));
     }
 
+    const values = {};
     const facts = h("div", { class: "pb-rq-facts" });
-    for (const label of ["Flag", "Requester", "Requestee", "Product/Component"]) {
-      const source = cell(label);
-      if (!source || !clean(source.textContent)) continue;
-      const who = label === "Requester" || label === "Requestee" ? person(source.textContent) : null;
-      facts.append(h(
-        "span",
-        { class: "pb-rq-fact", title: who?.full ?? clean(source.textContent) },
-        h("span", { class: "pb-rq-fact-label", text: label === "Product/Component" ? "In" : label === "Requester" ? "From" : label === "Requestee" ? "To" : "Flag" }),
-        who ? `${who.name}${who.nick ? ` (:${who.nick})` : ""}` : clean(source.textContent),
-      ));
+    for (const label of KEYS) {
+      const text = label === heading.kind ? heading.name : clean(cell(label)?.textContent ?? "");
+      if (!text) continue;
+      values[label] = text;
+      facts.append(fact(label, text));
     }
 
     const attachment = cell("Attachment");
@@ -74,25 +83,18 @@
       ? h("time", { class: `pb-rq-age${age > 90 ? " pb-rq-stale" : age > 14 ? " pb-rq-old" : ""}`, datetime: date.toISOString(), title: clean(opened.textContent), text: relativeAge(date) })
       : null;
 
-    const item = h(
+    const node = h(
       "li",
       { class: `pb-rq-item${status && ["RESOLVED", "VERIFIED", "CLOSED"].includes(status) ? " pb-rq-closed" : ""}` },
-      h(
-        "div",
-        { class: "pb-rq-main" },
-        h(
-          "a",
-          { class: bugClass, href: bugLink?.getAttribute("href") ?? "#" },
+      h("div", { class: "pb-rq-main" },
+        h("a", { class: bugClass, href: bugLink?.getAttribute("href") ?? "#" },
           id ? h("span", { class: "pb-rq-id", text: id }) : null,
-          h("span", { class: "pb-rq-summary", text: summary }),
-        ),
-        pills,
-      ),
+          h("span", { class: "pb-rq-summary", text: summary })),
+        pills),
       facts,
       ageNode,
     );
-    item.dataset.search = clean(row.textContent).toLowerCase();
-    return item;
+    return { node, values, time: date?.getTime() ?? 0, search: `${clean(row.textContent)} ${Object.values(values).join(" ")}`.toLowerCase() };
   }
 
   function buildFilters(main, hasResults, changes) {
@@ -127,14 +129,13 @@
     if (footnote) changes.addClass(footnote, "pb-rq-note");
   }
 
-  function buildGroups(main, changes) {
+  // Reads every BMO group table into request items and hides the originals.
+  function readRequests(main, changes) {
     const tables = $$(":scope > table.standard", main);
-    if (!tables.length) return [];
-
-    const container = h("div", { class: "pb-rq-groups" });
-    changes.insert(container, tables[0].parentNode, tables[0].previousElementSibling?.tagName === "H3" ? tables[0].previousElementSibling : tables[0]);
-
-    return tables.map((table, index) => {
+    const items = [];
+    let initialKey = "";
+    const links = new Map();
+    for (const table of tables) {
       const heading = table.previousElementSibling?.tagName === "H3" ? table.previousElementSibling : null;
       const listLink = table.nextElementSibling?.matches("a[href*='buglist.cgi']") ? table.nextElementSibling : null;
       const [headerRow, ...rows] = [...table.rows];
@@ -142,74 +143,87 @@
       // Only the first colon separates kind and name: "Product/Component: Firefox: Tabbed Browser".
       const headingText = clean(heading?.textContent ?? "");
       const colon = headingText.indexOf(":");
-      const kind = colon < 0 ? "" : headingText.slice(0, colon);
-      const name = colon < 0 ? headingText : headingText.slice(colon + 1).trim();
-
-      const list = h("ul", { class: "pb-rq-list" }, rows.filter((r) => r.classList.contains("bz_bugitem")).map((r) => buildItem(r, headers)));
-      const count = h("span", { class: "pb-badge", text: String(list.children.length) });
-      const header = h("header", { class: "pb-card-header" },
-        h("span", { class: "pb-rq-kind", text: kind }),
-        h("h2", { class: "pb-card-title", text: name || "None" }),
-        count);
-      const card = h("section", { class: "pb-card pb-rq-group", id: `pb-rq-group-${index}` }, header, list);
-      container.append(card);
-
-      if (listLink) {
-        header.append(h("a", { class: "pb-rq-buglist", href: listLink.getAttribute("href"), text: "View as bug list" }));
-      }
+      const group = { kind: colon < 0 ? "" : headingText.slice(0, colon), name: colon < 0 ? headingText : headingText.slice(colon + 1).trim() };
+      if (KEYS.includes(group.kind)) initialKey = group.kind;
+      if (listLink) links.set(group.name, listLink.getAttribute("href"));
+      for (const row of rows.filter((r) => r.classList.contains("bz_bugitem"))) items.push(buildItem(row, headers, group));
       for (const node of [heading, table, listLink]) {
         if (node) changes.addClass(node, "pb-hidden");
       }
-      return { card, list, count, name: name || "None" };
-    });
+    }
+    return { items, initialKey, links, anchor: tables[0]?.previousElementSibling?.tagName === "H3" ? tables[0].previousElementSibling : tables[0] };
   }
 
-  function buildToolbar(main, groups, changes) {
+  function buildQueue(main, { items, initialKey, links, anchor }, changes) {
+    const total = items.length;
+    const keys = ["", ...KEYS.filter((key) => items.some((item) => item.values[key]))];
+    let groupKey = keys.includes(initialKey) ? initialKey : "";
+    let terms = [];
+
     const input = h("input", { type: "search", class: "pb-filter pb-rq-search", placeholder: "Filter requests…", "aria-label": "Filter requests", autocomplete: "off" });
     const status = h("span", { class: "pb-filter-count", "aria-live": "polite" });
-    const total = groups.reduce((n, g) => n + g.list.children.length, 0);
+    const groupButtons = keys.map((key) => {
+      const button = h("button", { type: "button", class: "pb-rq-group-option", "aria-pressed": String(key === groupKey), text: GROUP_LABELS[key] });
+      button.addEventListener("click", () => {
+        groupKey = key;
+        for (const other of groupButtons) other.setAttribute("aria-pressed", String(other === button));
+        render();
+      });
+      return button;
+    });
     const toolbar = h("div", { class: "pb-rq-toolbar" },
-      h("span", { class: "pb-rq-total", text: `${total} ${total === 1 ? "request" : "requests"} in ${groups.length} ${groups.length === 1 ? "group" : "groups"}` }),
-      input, status);
+      h("span", { class: "pb-rq-total", text: `${total} ${total === 1 ? "request" : "requests"}` }),
+      input, status,
+      h("div", { class: "pb-rq-grouping", role: "group", "aria-label": "Group by" }, h("span", { class: "pb-rq-grouping-label", text: "Group by" }), groupButtons));
 
-    // Plain anchor links: keyboard friendly, move the focus start point and work with Back.
-    if (groups.length > 1) {
-      const jump = h("details", { class: "pb-rq-jump" },
-        h("summary", { text: "Jump to group" }),
-        h("ul", { class: "pb-rq-jump-list" }, groups.map((g, i) => h("li", {},
-          h("a", { href: `#pb-rq-group-${i}` }, g.name, h("span", { class: "pb-rq-jump-count", text: String(g.list.children.length) }))))));
-      changes.listen(jump, "click", (event) => {
-        if (event.target.closest("a")) jump.open = false;
-      });
-      changes.listen(jump, "keydown", (event) => {
-        if (event.key !== "Escape" || !jump.open) return;
-        jump.open = false;
-        jump.querySelector("summary").focus();
-      });
-      toolbar.append(jump);
+    const groupsNode = h("div", { class: "pb-rq-groups" });
+    const nav = h("nav", { class: "pb-rq-rail", "aria-label": "Groups" });
+    const layout = h("div", { class: "pb-rq-layout" }, groupsNode, nav);
+    changes.insert(toolbar, anchor.parentNode, anchor);
+    changes.insert(layout, anchor.parentNode, anchor);
+
+    // Oldest first: the requests waiting longest are the ones to answer.
+    const sorted = [...items].sort((a, b) => a.time - b.time);
+
+    function render() {
+      const matching = sorted.filter((item) => terms.every((t) => item.search.includes(t)));
+      const groups = new Map();
+      for (const item of matching) {
+        const name = groupKey ? item.values[groupKey] ?? "None" : "";
+        if (!groups.has(name)) groups.set(name, []);
+        groups.get(name).push(item);
+      }
+      const ordered = groupKey ? [...groups].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0])) : [...groups];
+
+      groupsNode.dataset.group = groupKey;
+      groupsNode.replaceChildren(...ordered.map(([name, list], index) => {
+        const header = h("header", { class: "pb-card-header" },
+          groupKey ? h("span", { class: "pb-rq-kind", text: GROUP_LABELS[groupKey] }) : null,
+          h("h2", { class: "pb-card-title", text: groupKey ? name : "All requests" }),
+          h("span", { class: "pb-badge", text: String(list.length) }));
+        const href = groupKey === initialKey && links.get(name);
+        if (href) header.append(h("a", { class: "pb-rq-buglist", href, text: "View as bug list" }));
+        return h("section", { class: "pb-card pb-rq-group", id: `pb-rq-group-${index}` },
+          header,
+          h("ul", { class: "pb-rq-list" }, list.map((item) => item.node)));
+      }));
+
+      nav.hidden = !groupKey || ordered.length < 2;
+      nav.replaceChildren(h("h2", { class: "pb-rq-rail-title", text: `${ordered.length} groups` }),
+        h("ul", {}, ordered.map(([name, list], index) => h("li", {},
+          h("a", { href: `#pb-rq-group-${index}` }, h("span", { class: "pb-rq-rail-name", text: name }), h("span", { class: "pb-rq-rail-count", text: String(list.length) }))))));
+      layout.classList.toggle("pb-rq-has-rail", !nav.hidden);
+      status.textContent = terms.length ? `${matching.length} of ${total}` : "";
     }
 
-    changes.insert(toolbar, groups[0].card.parentNode.parentNode, groups[0].card.parentNode);
-
     changes.listen(input, "input", () => {
-      const terms = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
-      let shown = 0;
-      for (const group of groups) {
-        let visible = 0;
-        for (const item of group.list.children) {
-          const match = terms.every((t) => item.dataset.search.includes(t));
-          item.hidden = !match;
-          if (match) visible++;
-        }
-        group.card.hidden = visible === 0;
-        group.count.textContent = terms.length ? `${visible} / ${group.list.children.length}` : String(group.list.children.length);
-        shown += visible;
-      }
-      status.textContent = terms.length ? `${shown} of ${total}` : "";
+      terms = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      render();
     });
     changes.listen(input, "keydown", (event) => {
       if (event.key === "Enter") event.preventDefault();
     });
+    render();
   }
 
   register({
@@ -222,9 +236,9 @@
     apply(changes) {
       const main = document.getElementById("main-inner");
       changes.addClass(document.body, "pb-requests");
-      const groups = buildGroups(main, changes);
-      buildFilters(main, groups.length > 0, changes);
-      if (groups.length) buildToolbar(main, groups, changes);
+      const queue = readRequests(main, changes);
+      buildFilters(main, queue.items.length > 0, changes);
+      if (queue.items.length) buildQueue(main, queue, changes);
 
       const csv = $$(":scope > a[href*='ctype=csv']", main)[0];
       if (csv) changes.addClass(csv, "pb-rq-csv");

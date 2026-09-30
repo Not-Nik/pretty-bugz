@@ -22,9 +22,9 @@ A Firefox extension that gives [bugzilla.mozilla.org](https://bugzilla.mozilla.o
 | `buglist.cgi` | Full-width list with an honest result count (and Show all when BMO capped it), search chips with Edit, a sticky toolbar with an instant filter kept in the URL, Compact/Comfortable rows, Export/Save menus, severity stripes, `j`/`k`/Enter/`Shift+O`/`/` shortcuts, and in Change Several Bugs mode a selection bar with shift-click ranges and `x` |
 | `query.cgi?format=advanced` | Type, Severity and Priority next to Product and Status, filter boxes for the lists, "N active" badges on collapsed sections, and a sticky "Your search" rail listing every criterion (click to jump, × to remove) next to Sort and Search |
 | `query.cgi?format=specific` / `instant` | A search-engine style hero |
-| `request.cgi` | Collapsible filters, one card per group, relative ages, filter box and group jump |
+| `request.cgi` | Collapsible filters, readable request rows oldest first with ages, a Group by switch (none, requestee, requester, flag, product), a sticky rail of groups with counts, and a filter box |
 | `describecomponents.cgi?product=…` | Product header with quick actions, filterable component cards, A–Z jump |
-| `show_activity.cgi` | A day-grouped timeline with field chips, person filter and "hide CC changes" |
+| `show_activity.cgi` | A compact day-grouped change log with field chips, person filter, Hide CC, Newest first, a value history for a single field (e.g. P3 → P2 → P1), and the filter kept in the URL |
 | `describekeywords.cgi` | Filterable, sortable keyword cards |
 | `user_profile` | Profile header, stats tiles, activity-by-product bars |
 | `page.cgi?id=attention.html` | A triage dashboard: counts per list, priority tiers, collapsed empty lists |
