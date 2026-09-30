@@ -64,6 +64,14 @@
   background-color: var(--pb-bg);
 }
 
+.pb-on.pb-layout .pb-ac-toolbar.pb-ac-static {
+  position: static;
+}
+
+.pb-on.pb-layout .pb-ac-view:has(.pb-ac-static) .pb-ac-day {
+  top: calc(var(--global-header-height) + 8px);
+}
+
 .pb-on.pb-layout .pb-ac-chips {
   display: flex;
   flex: 1;
@@ -147,7 +155,7 @@
 
 .pb-on.pb-layout .pb-ac-day {
   position: sticky;
-  top: calc(var(--global-header-height) + 56px);
+  top: calc(var(--global-header-height) + var(--pb-ac-toolbar-height, 56px) + 8px);
   z-index: 5;
   margin: 20px 0 8px;
   width: fit-content;
@@ -221,7 +229,16 @@
 }
 
 .pb-on.pb-layout .pb-ac-when {
+  color: var(--pb-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.pb-on.pb-layout .pb-ac-ago {
   color: var(--pb-text-3);
+}
+
+.pb-on.pb-layout a.pb-ac-ref {
+  font-weight: 500;
 }
 
 .pb-on.pb-layout .pb-ac-changes {
@@ -269,9 +286,12 @@
 .pb-on.pb-layout .pb-ac-added {
   color: var(--pb-success);
   background-color: var(--pb-success-soft);
+  text-decoration: none;
 }
 
-.pb-on.pb-layout .pb-ac-value a {
+/* BMO strikes through links to closed bugs, which would read as "removed" here. */
+.pb-on.pb-layout .pb-ac-value a,
+.pb-on.pb-layout .pb-ac-value a.bz_closed {
   color: inherit;
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);

@@ -13,7 +13,7 @@ import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -24,7 +24,7 @@ const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/201001
 const FIREFOX = process.env.FIREFOX ?? (existsSync("/Applications/Firefox.app/Contents/MacOS/firefox") ? "/Applications/Firefox.app/Contents/MacOS/firefox" : "firefox");
 const CHROME = process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
-// Pages used by `fetch` and `undo-all`. `query` is appended when the layout keys off the URL.
+// Pages used by `fetch` and `undo-all`. The harness serves each fixture at its `url`.
 const PAGES = [
   { name: "bug.html", url: "/show_bug.cgi?id=1000000", expect: null },
   { name: "home.html", url: "/home", expect: null },
@@ -38,12 +38,12 @@ const PAGES = [
   { name: "activity.html", url: "/show_activity.cgi?id=1000000", expect: "activity" },
   { name: "keywords.html", url: "/describekeywords.cgi", expect: "keywords" },
   { name: "profile.html", url: "/user_profile?user_id=258347", expect: "profile" },
-  { name: "page-bug-writing.html", url: "/page.cgi?id=bug-writing.html", expect: "page-article", query: "?id=bug-writing.html" },
-  { name: "page-quicksearch.html", url: "/page.cgi?id=quicksearch.html", expect: "page-article", query: "?id=quicksearch.html" },
-  { name: "page-custom-forms.html", url: "/page.cgi?id=custom_forms.html", expect: "page-custom-forms", query: "?id=custom_forms.html" },
-  { name: "page-attention.html", url: "/page.cgi?id=attention.html&who=nobody%40mozilla.org", expect: "page-attention", query: "?id=attention.html" },
-  { name: "page-user-activity.html", url: "/page.cgi?id=user_activity.html", expect: "page-tool", query: "?id=user_activity.html" },
-  { name: "enter-bug.mock.html", expect: "enter-bug", local: true },
+  { name: "page-bug-writing.html", url: "/page.cgi?id=bug-writing.html", expect: "page-article" },
+  { name: "page-quicksearch.html", url: "/page.cgi?id=quicksearch.html", expect: "page-article" },
+  { name: "page-custom-forms.html", url: "/page.cgi?id=custom_forms.html", expect: "page-custom-forms" },
+  { name: "page-attention.html", url: "/page.cgi?id=attention.html&who=nobody%40mozilla.org", expect: "page-attention" },
+  { name: "page-user-activity.html", url: "/page.cgi?id=user_activity.html", expect: "page-tool" },
+  { name: "enter-bug.mock.html", url: "/enter_bug.cgi?product=Firefox", expect: "enter-bug", local: true },
 ];
 
 // Store screenshots for addons.mozilla.org (see store/listing.md for captions).
@@ -51,7 +51,7 @@ const SCREENSHOTS = [
   { out: "1-buglist.png", fixture: "buglist.html", extra: "buglist-select.js" },
   { out: "2-bug-dark.png", fixture: "bug.html", theme: "dark" },
   { out: "3-new-bug.png", fixture: "enter-bug.mock.html", extra: "enter-bug-filled.js" },
-  { out: "4-attention.png", fixture: "page-attention.html", query: "?id=attention.html" },
+  { out: "4-attention.png", fixture: "page-attention.html" },
   { out: "5-advanced-search.png", fixture: "query-advanced.html" },
   { out: "6-components-dark.png", fixture: "components.html", theme: "dark" },
   { out: "7-history.png", fixture: "activity.html" },
@@ -101,30 +101,29 @@ function buildPage(fixture, { theme = "auto", layouts = true, extra = "" } = {})
   return html;
 }
 
-function serve() {
-  mkdirSync(OUT, { recursive: true });
+// The fixture's real BMO path and query, so layouts that check location match as they would live.
+function pagePath(fixtureName, query) {
+  const page = PAGES.find((p) => p.name === fixtureName);
+  const url = new URL(page?.url ?? `/${fixtureName}`, BMO);
+  if (query) url.search = query;
+  return url.pathname + url.search;
+}
+
+// Serves one page from memory on its own port, so parallel runs never share state.
+async function withPage(html, path, fn) {
+  const target = new URL(path, BMO).pathname;
   const server = createServer((req, res) => {
-    const file = join(OUT, basename(new URL(req.url, "http://x").pathname));
-    if (!existsSync(file)) {
+    if (new URL(req.url, BMO).pathname !== target) {
       res.writeHead(404).end();
       return;
     }
-    res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(readFileSync(file));
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(html);
   });
-  return new Promise((ok) => server.listen(0, "127.0.0.1", () => ok(server)));
-}
-
-async function withPage(prefix, html, query, fn) {
-  mkdirSync(OUT, { recursive: true });
-  // Unique per process so parallel runs of the same fixture don't overwrite each other.
-  const name = `${prefix}-${process.pid}.html`;
-  writeFileSync(join(OUT, name), html);
-  const server = await serve();
+  await new Promise((ok) => server.listen(0, "127.0.0.1", ok));
   try {
-    return await fn(`http://127.0.0.1:${server.address().port}/${name}${query ?? ""}`);
+    return await fn(`http://127.0.0.1:${server.address().port}${path}`);
   } finally {
     server.close();
-    rmSync(join(OUT, name), { force: true });
   }
 }
 
@@ -158,7 +157,8 @@ async function shot(fixtureName, args) {
   const out = resolve(args.out ?? join(OUT, fixtureName.replace(/\.html$/, ".png")));
   const extra = args.extra ? readFileSync(args.extra, "utf8") : "";
   const html = buildPage(fixturePath(fixtureName), { theme: args.theme, layouts: args.layouts !== false, extra });
-  await withPage(`shot-${basename(fixtureName, ".html")}`, html, args.query, async (url) => {
+  mkdirSync(dirname(out), { recursive: true });
+  await withPage(html, pagePath(fixtureName, args.query), async (url) => {
     const profile = mkdtempSync(join(tmpdir(), "pb-firefox-"));
     let prefs = readFileSync(join(ROOT, "tools", "firefox-user.js"), "utf8");
     if (args.os === "dark") prefs = prefs.replace("systemUsesDarkTheme\", 0", "systemUsesDarkTheme\", 1").replace("content-override\", 1", "content-override\", 0");
@@ -172,7 +172,7 @@ async function shot(fixtureName, args) {
 
 async function runScript(fixtureName, { extra, id, query, theme, layouts }) {
   const html = buildPage(fixturePath(fixtureName), { theme, layouts, extra });
-  const dom = await withPage(`${id}-${basename(fixtureName, ".html")}`, html, query, (url) => chromeDom(url));
+  const dom = await withPage(html, pagePath(fixtureName, query), (url) => chromeDom(url));
   const match = dom.match(new RegExp(`id="${id}"[^>]*>([^<]*)`));
   return match ? match[1].replace(/&quot;/g, "\"").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").trim() : "NO RESULT";
 }
@@ -223,7 +223,7 @@ if (command === "fetch") {
 } else if (command === "undo-all") {
   let failed = false;
   for (const page of PAGES) {
-    const result = await undo(page.name, page.query);
+    const result = await undo(page.name);
     const ok = page.expect ? result === `${page.expect}: changed=true restored=true` : result === "no layouts matched";
     failed ||= !ok;
     console.log(`${ok ? "ok  " : "FAIL"} ${page.name.padEnd(28)} ${result}`);
@@ -235,7 +235,6 @@ if (command === "fetch") {
       out: join(ROOT, "store", "screenshots", s.out),
       size: "1280,800",
       theme: s.theme,
-      query: s.query,
       extra: s.extra && join(ROOT, "tools", "extras", s.extra),
     });
   }

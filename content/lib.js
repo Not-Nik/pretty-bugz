@@ -93,9 +93,27 @@ globalThis.PrettyBugz = (() => {
     }
   }
 
+  // BMO prints times as "YYYY-MM-DD HH:MM[:SS] ZONE" in the user's preferred zone. Keep the day
+  // and clock time as shown (like the bug page does) and compute the real instant for ages.
+  const ZONES = { UTC: 0, GMT: 0, PST: -8, PDT: -7, MST: -7, MDT: -6, CST: -6, CDT: -5, EST: -5, EDT: -4, CET: 1, CEST: 2, BST: 1, EET: 2, EEST: 3, IST: 5.5, JST: 9, AEST: 10, AEDT: 11 };
+
+  function parseTime(text) {
+    const match = text.match(/(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?\s*([A-Z]{2,5})?/);
+    if (!match) return null;
+    const [, y, mo, d, hh = "00", mi = "00", ss = "00", zone = ""] = match;
+    const offset = ZONES[zone];
+    const pad = (n) => String(n).padStart(2, "0");
+    const suffix = offset === undefined ? "" : `${offset < 0 ? "-" : "+"}${pad(Math.floor(Math.abs(offset)))}:${pad((Math.abs(offset) % 1) * 60)}`;
+    return {
+      instant: new Date(`${y}-${mo}-${d}T${hh}:${mi}:${ss}${suffix}`),
+      day: new Date(Date.UTC(y, mo - 1, d)),
+      time: `${hh}:${mi}${zone ? ` ${zone}` : ""}`,
+    };
+  }
+
   function register(layout) {
     layouts.push(layout);
   }
 
-  return { h, Changes, register, layouts };
+  return { h, Changes, register, layouts, parseTime };
 })();

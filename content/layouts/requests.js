@@ -4,7 +4,7 @@
 // card of readable request rows (bug first, then who/what/when with relative ages), plus an
 // instant filter and a group jump menu.
 (() => {
-  const { h, register } = globalThis.PrettyBugz;
+  const { h, register, parseTime } = globalThis.PrettyBugz;
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -21,13 +21,6 @@
     return `${years} ${years === 1 ? "year" : "years"} ago`;
   }
 
-  function parseDate(text) {
-    const match = text.match(/(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{2}):(\d{2}))?/);
-    if (!match) return null;
-    const [, y, m, d, hh = "00", mm = "00"] = match;
-    return new Date(`${y}-${m}-${d}T${hh}:${mm}:00`);
-  }
-
   function person(text) {
     const value = clean(text);
     const nick = value.match(/\[:([^\]\s]+)/)?.[1];
@@ -40,11 +33,13 @@
     const cell = (label) => cells[headers.indexOf(label)];
     const bugLink = $("a[href*='show_bug.cgi']", cell("Bug") ?? row);
     const bugText = clean(bugLink?.textContent ?? "");
+    const bugClass = bugLink?.classList.contains("bz_secure") ? "pb-rq-bug bz_secure" : "pb-rq-bug";
     const [, id, meta = "", summary = bugText] = bugText.match(/^(\d+)\s*\(([^)]*)\):\s*(.*)$/) ?? [];
     const [type, priority, severity] = meta.split("/");
     const status = STATUSES.find((s) => row.classList.contains(`bz_${s}`));
 
     const pills = h("span", { class: "pb-rq-pills" });
+    if (bugLink?.classList.contains("bz_secure")) pills.append(h("span", { class: "pb-rq-pill pb-rq-secure", text: "Restricted" }));
     if (status) pills.append(h("span", { class: `pb-rq-status pb-rq-status-${status.toLowerCase()}`, text: status }));
     for (const value of [type, priority, severity]) {
       if (value && value !== "--") pills.append(h("span", { class: "pb-rq-pill", text: value }));
@@ -66,16 +61,17 @@
     const attachment = cell("Attachment");
     const attachmentLinks = attachment ? $$("a", attachment) : [];
     if (attachmentLinks.length) {
+      const links = attachmentLinks.map((a) => h("a", { href: a.getAttribute("href"), text: clean(a.textContent) }));
       facts.append(h("span", { class: "pb-rq-fact pb-rq-attachment" },
-        h("span", { class: "pb-rq-fact-label", text: "Patch" }),
-        ...attachmentLinks.map((a) => a.cloneNode(true))));
+        h("span", { class: "pb-rq-fact-label", text: "Attachment" }),
+        ...links.flatMap((link, i) => (i ? [" · ", link] : [link]))));
     }
 
     const opened = cell("Opened");
-    const date = opened ? parseDate(opened.textContent) : null;
+    const date = opened ? parseTime(opened.textContent)?.instant : null;
     const age = date ? (Date.now() - date.getTime()) / 86400000 : 0;
     const ageNode = date
-      ? h("time", { class: `pb-rq-age${age > 30 ? " pb-rq-stale" : age > 7 ? " pb-rq-old" : ""}`, datetime: date.toISOString(), title: clean(opened.textContent), text: relativeAge(date) })
+      ? h("time", { class: `pb-rq-age${age > 90 ? " pb-rq-stale" : age > 14 ? " pb-rq-old" : ""}`, datetime: date.toISOString(), title: clean(opened.textContent), text: relativeAge(date) })
       : null;
 
     const item = h(
@@ -86,7 +82,7 @@
         { class: "pb-rq-main" },
         h(
           "a",
-          { class: "pb-rq-bug", href: bugLink?.getAttribute("href") ?? "#" },
+          { class: bugClass, href: bugLink?.getAttribute("href") ?? "#" },
           id ? h("span", { class: "pb-rq-id", text: id }) : null,
           h("span", { class: "pb-rq-summary", text: summary }),
         ),
@@ -99,21 +95,23 @@
     return item;
   }
 
-  function buildFilters(main, changes) {
+  function buildFilters(main, hasResults, changes) {
     const form = $("form#request_form", main);
     if (!form) return;
+    const union = form.querySelector('input[name="do_union"]:checked')?.value === "1";
     const summaryText = [...form.elements]
-      .filter((el) => (el.tagName === "SELECT" || el.type === "text") && el.value && el.name !== "group")
+      .filter((el) => (el.tagName === "SELECT" || el.type === "text") && el.value && el.value !== "all" && el.name !== "group")
       .map((el) => {
         const label = clean(el.closest("td")?.previousElementSibling?.textContent ?? el.name).replace(/:$/, "");
         const value = el.tagName === "SELECT" ? clean(el.options[el.selectedIndex]?.text ?? el.value) : el.value;
         return `${label}: ${value}`;
       })
-      .join(" · ");
+      .join(union ? " or " : " · ");
 
+    // Without a query (or with no matches) the form is the only thing on the page.
     const details = h(
       "details",
-      { class: "pb-card pb-rq-filters" },
+      { class: "pb-card pb-rq-filters", open: !hasResults },
       h("summary", { class: "pb-card-header" },
         h("span", { class: "pb-card-title", text: "Filters" }),
         h("span", { class: "pb-rq-filter-summary", text: summaryText || "All requests" })),
@@ -141,7 +139,11 @@
       const listLink = table.nextElementSibling?.matches("a[href*='buglist.cgi']") ? table.nextElementSibling : null;
       const [headerRow, ...rows] = [...table.rows];
       const headers = [...headerRow.cells].map((c) => clean(c.textContent));
-      const [kind = "", name = ""] = clean(heading?.textContent ?? "").split(/:\s*/, 2);
+      // Only the first colon separates kind and name: "Product/Component: Firefox: Tabbed Browser".
+      const headingText = clean(heading?.textContent ?? "");
+      const colon = headingText.indexOf(":");
+      const kind = colon < 0 ? "" : headingText.slice(0, colon);
+      const name = colon < 0 ? headingText : headingText.slice(colon + 1).trim();
 
       const list = h("ul", { class: "pb-rq-list" }, rows.filter((r) => r.classList.contains("bz_bugitem")).map((r) => buildItem(r, headers)));
       const count = h("span", { class: "pb-badge", text: String(list.children.length) });
@@ -170,13 +172,19 @@
       h("span", { class: "pb-rq-total", text: `${total} ${total === 1 ? "request" : "requests"} in ${groups.length} ${groups.length === 1 ? "group" : "groups"}` }),
       input, status);
 
+    // Plain anchor links: keyboard friendly, move the focus start point and work with Back.
     if (groups.length > 1) {
-      const jump = h("select", { class: "pb-rq-jump", "aria-label": "Jump to group" },
-        h("option", { value: "", text: "Jump to group…" }),
-        groups.map((g, i) => h("option", { value: `pb-rq-group-${i}`, text: `${g.name} (${g.list.children.length})` })));
-      changes.listen(jump, "change", () => {
-        document.getElementById(jump.value)?.scrollIntoView({ behavior: "smooth", block: "start" });
-        jump.value = "";
+      const jump = h("details", { class: "pb-rq-jump" },
+        h("summary", { text: "Jump to group" }),
+        h("ul", { class: "pb-rq-jump-list" }, groups.map((g, i) => h("li", {},
+          h("a", { href: `#pb-rq-group-${i}` }, g.name, h("span", { class: "pb-rq-jump-count", text: String(g.list.children.length) }))))));
+      changes.listen(jump, "click", (event) => {
+        if (event.target.closest("a")) jump.open = false;
+      });
+      changes.listen(jump, "keydown", (event) => {
+        if (event.key !== "Escape" || !jump.open) return;
+        jump.open = false;
+        jump.querySelector("summary").focus();
       });
       toolbar.append(jump);
     }
@@ -214,8 +222,8 @@
     apply(changes) {
       const main = document.getElementById("main-inner");
       changes.addClass(document.body, "pb-requests");
-      buildFilters(main, changes);
       const groups = buildGroups(main, changes);
+      buildFilters(main, groups.length > 0, changes);
       if (groups.length) buildToolbar(main, groups, changes);
 
       const csv = $$(":scope > a[href*='ctype=csv']", main)[0];

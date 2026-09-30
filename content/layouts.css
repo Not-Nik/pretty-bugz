@@ -3,6 +3,17 @@
  * with these rules live in content/layouts/*.js and are reverted when layouts are off.
  */
 
+/* Shared: text for screen readers only */
+
+.pb-on.pb-layout .pb-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* Shared: cards */
 
 .pb-on.pb-layout .pb-card,
