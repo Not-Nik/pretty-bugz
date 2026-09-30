@@ -17,10 +17,15 @@
   --pb-border-strong: light-dark(#cdd2d8, #3a424d);
   --pb-text: light-dark(#1b1f24, #e6e9ed);
   --pb-text-2: light-dark(#57606a, #9da7b3);
-  --pb-text-3: light-dark(#848d97, #6e7781);
+  --pb-text-3: light-dark(#656d76, #8b949e);
   --pb-accent: light-dark(#0060df, #3d8bfd);
   --pb-accent-hover: light-dark(#0250bb, #5a9cff);
   --pb-accent-pressed: light-dark(#054096, #2f74e0);
+  /* Fills behind white text: the bright dark-mode accent is too light for that. */
+  --pb-accent-fill: light-dark(#0060df, #1f6feb);
+  --pb-accent-fill-hover: light-dark(#0250bb, #1a60d0);
+  --pb-accent-fill-pressed: light-dark(#054096, #1553b6);
+  --pb-danger-fill: light-dark(#cf222e, #da3633);
   --pb-accent-soft: color-mix(in srgb, var(--pb-accent) 14%, transparent);
   --pb-link: light-dark(#0060df, #6ea8fe);
   --pb-link-hover: light-dark(#0250bb, #9ec5fe);
@@ -124,14 +129,14 @@
 
   /* Buttons */
   --primary-button-foreground-color: #fff;
-  --primary-button-background-color: var(--pb-accent);
-  --primary-button-border-color: var(--pb-accent);
+  --primary-button-background-color: var(--pb-accent-fill);
+  --primary-button-border-color: var(--pb-accent-fill);
   --hovered-primary-button-foreground-color: #fff;
-  --hovered-primary-button-background-color: var(--pb-accent-hover);
-  --hovered-primary-button-border-color: var(--pb-accent-hover);
+  --hovered-primary-button-background-color: var(--pb-accent-fill-hover);
+  --hovered-primary-button-border-color: var(--pb-accent-fill-hover);
   --pressed-primary-button-foreground-color: #fff;
-  --pressed-primary-button-background-color: var(--pb-accent-pressed);
-  --pressed-primary-button-border-color: var(--pb-accent-pressed);
+  --pressed-primary-button-background-color: var(--pb-accent-fill-pressed);
+  --pressed-primary-button-border-color: var(--pb-accent-fill-pressed);
   --secondary-button-foreground-color: var(--pb-text);
   --secondary-button-background-color: var(--pb-surface);
   --secondary-button-border-color: var(--pb-border-strong);
@@ -142,12 +147,13 @@
   --pressed-secondary-button-background-color: var(--pb-surface-3);
   --pressed-secondary-button-border-color: var(--pb-border-strong);
   --danger-button-foreground-color: #fff;
-  --danger-button-background-color: var(--pb-danger);
-  --danger-button-border-color: var(--pb-danger);
+  --danger-button-background-color: var(--pb-danger-fill);
+  --danger-button-border-color: var(--pb-danger-fill);
   --selected-button-foreground-color: var(--pb-surface);
   --selected-button-background-color: var(--pb-text);
   --disabled-button-foreground-color: var(--pb-text-3);
   --disabled-button-background-color: var(--pb-surface-2);
+  --inverted-label-color: var(--pb-surface);
 
   /* Menus, tabs, grids */
   --menu-border-color: var(--pb-border);
@@ -178,6 +184,10 @@
   --accent-color-green-1: 26, 127, 55;
   --accent-color-blue-1: 0, 96, 223;
   --accent-color-blue-2: 2, 80, 187;
+  --accent-color-blue-3: 0, 96, 223;
+  --accent-color-blue-4: 2, 80, 187;
+  --accent-color-blue-5: 5, 64, 150;
+  --accent-color-yellow-1: 227, 207, 111;
   --accent-color-lightyellow-1: 255, 248, 197;
   --accent-color-pink-1: 255, 235, 233;
   --accent-color-lightgreen-1: 218, 251, 225;
@@ -193,6 +203,10 @@
     --accent-color-green-1: 63, 185, 80;
     --accent-color-blue-1: 61, 139, 253;
     --accent-color-blue-2: 90, 156, 255;
+    --accent-color-blue-3: 31, 111, 235;
+    --accent-color-blue-4: 26, 96, 208;
+    --accent-color-blue-5: 21, 83, 182;
+    --accent-color-yellow-1: 107, 84, 19;
     --accent-color-lightyellow-1: 46, 38, 8;
     --accent-color-pink-1: 73, 32, 34;
     --accent-color-lightgreen-1: 20, 52, 32;
@@ -208,6 +222,10 @@
   --accent-color-green-1: 63, 185, 80;
   --accent-color-blue-1: 61, 139, 253;
   --accent-color-blue-2: 90, 156, 255;
+  --accent-color-blue-3: 31, 111, 235;
+  --accent-color-blue-4: 26, 96, 208;
+  --accent-color-blue-5: 21, 83, 182;
+  --accent-color-yellow-1: 107, 84, 19;
   --accent-color-lightyellow-1: 46, 38, 8;
   --accent-color-pink-1: 73, 32, 34;
   --accent-color-lightgreen-1: 20, 52, 32;
@@ -219,13 +237,14 @@
   color-scheme: light;
 }
 
-/* Base */
-
-.pb-on body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+/* BMO limits its dark mode to screens; printouts should stay light too. */
+@media print {
+  :root.pb-on {
+    color-scheme: light;
+  }
 }
+
+/* Base */
 
 .pb-on ::selection {
   background-color: color-mix(in srgb, var(--pb-accent) 28%, transparent);
@@ -275,6 +294,27 @@
 
 .pb-on #header-title a {
   color: var(--pb-text);
+}
+
+/* BMO's logo is white-only, made for its dark header; darken it on our light one. */
+.pb-on #header-external-menu-button img {
+  filter: brightness(0) opacity(.8);
+}
+
+@media (prefers-color-scheme: dark) {
+  .pb-on:not([data-pb-theme="light"]) #header-external-menu-button img {
+    filter: none;
+  }
+}
+
+.pb-on[data-pb-theme="dark"] #header-external-menu-button img {
+  filter: none;
+}
+
+/* BMO hides focus outlines in the header; keyboard users need them. */
+.pb-on #header :is(a, button):focus-visible {
+  outline: 2px solid var(--pb-accent);
+  outline-offset: -2px;
 }
 
 .pb-on #header .inner .header-button {
@@ -399,6 +439,34 @@
   border-radius: 4px;
 }
 
+/* Restate BMO's checked/disabled states, which the rule above would otherwise beat. */
+.pb-on input[type="checkbox"]:is(:checked, :indeterminate) {
+  border-color: var(--checked-control-background-color);
+  background-color: var(--checked-control-background-color);
+}
+
+.pb-on input[type="radio"]:checked {
+  border-width: 5px;
+  border-color: var(--checked-control-background-color);
+}
+
+.pb-on input:is([type="checkbox"], [type="radio"]):disabled {
+  border-width: 1px;
+  border-color: var(--pb-border-strong);
+  background-color: var(--pb-surface-3);
+  cursor: default;
+}
+
+.pb-on input[type="checkbox"]:disabled:checked {
+  border-color: var(--pb-text-3);
+  background-color: var(--pb-text-3);
+}
+
+.pb-on input[type="radio"]:disabled:checked {
+  border-width: 5px;
+  border-color: var(--pb-text-3);
+}
+
 .pb-on input[type="checkbox"]:checked {
   background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>');
   background-size: 12px;
@@ -407,12 +475,6 @@
 .pb-on input[type="checkbox"]:indeterminate {
   background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><path d="M6 12h12"/></svg>');
   background-size: 12px;
-}
-
-.pb-on input[type="checkbox"]:focus-visible,
-.pb-on input[type="radio"]:focus-visible {
-  outline: none;
-  box-shadow: var(--pb-ring);
 }
 
 /* Buttons */
@@ -425,13 +487,6 @@
   transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s;
 }
 
-.pb-on button:focus-visible,
-.pb-on input[type="button"]:focus-visible,
-.pb-on input[type="submit"]:focus-visible {
-  outline: none;
-  box-shadow: var(--pb-ring);
-}
-
 .pb-on button.ghost,
 .pb-on button.iconic,
 .pb-on #header button,
@@ -441,6 +496,10 @@
 
 .pb-on button.iconic {
   border-radius: 8px;
+}
+
+.pb-on .xdsoft_datetimepicker button {
+  box-shadow: none;
 }
 
 .pb-on button.ghost:hover {
@@ -569,8 +628,11 @@
   padding-bottom: 6px;
 }
 
-.pb-on #attachments tr + tr td {
-  border-top: 1px solid var(--pb-border);
+/* Obsolete attachments are hidden rows, so only draw lines after a visible one. Below 768px BMO shows cards. */
+@media (width >= 768px) {
+  .pb-on #attachments tr:not([style*="display:none"], [style*="display: none"]) ~ tr td {
+    border-top: 1px solid var(--pb-border);
+  }
 }
 
 .pb-on .tracking-flags th {
@@ -596,6 +658,12 @@
 .pb-on .change-set > :last-child {
   border-bottom-left-radius: calc(var(--pb-radius) - 1px);
   border-bottom-right-radius: calc(var(--pb-radius) - 1px);
+}
+
+/* The header table paints its own background, so it needs the corners too. */
+.pb-on .change-set > :first-child > .change-head:first-child {
+  border-top-left-radius: calc(var(--pb-radius) - 1px);
+  border-top-right-radius: calc(var(--pb-radius) - 1px);
 }
 
 .pb-on .change-set:target {
@@ -639,6 +707,10 @@
   color: var(--pb-text-3);
 }
 
+.pb-on h3.change-name {
+  font-weight: normal;
+}
+
 .pb-on h3.change-name a:hover {
   color: var(--pb-accent);
 }
@@ -652,6 +724,11 @@
   font-size: 13px;
   font-size-adjust: none;
   line-height: 1.6;
+}
+
+/* Ligatures in fonts like JetBrains Mono would turn code such as != or -> into glyphs. */
+.pb-on :is(.comment-text, pre, code) {
+  font-variant-ligatures: none;
 }
 
 .pb-on .comment-text span.quote,
@@ -686,6 +763,10 @@
   color: var(--pb-text-2);
   background: var(--pb-surface-2);
   font-size: var(--font-size-small);
+}
+
+.pb-on .change + .activity {
+  border-top: 0;
 }
 
 .pb-on .comment-tag {
@@ -737,7 +818,23 @@
   border-radius: var(--pb-radius);
   background-color: var(--pb-surface);
   box-shadow: var(--pb-shadow);
-  overflow: hidden;
+}
+
+/* Rounded corner cells instead of overflow: hidden, which would break BMO's sticky header. */
+.pb-on table.bz_buglist tr:first-child > :first-child {
+  border-top-left-radius: calc(var(--pb-radius) - 1px);
+}
+
+.pb-on table.bz_buglist tr:first-child > :last-child {
+  border-top-right-radius: calc(var(--pb-radius) - 1px);
+}
+
+.pb-on table.bz_buglist tr:last-child > :first-child {
+  border-bottom-left-radius: calc(var(--pb-radius) - 1px);
+}
+
+.pb-on table.bz_buglist tr:last-child > :last-child {
+  border-bottom-right-radius: calc(var(--pb-radius) - 1px);
 }
 
 .pb-on table.bz_buglist th {
@@ -765,6 +862,33 @@
 
 .pb-on table.bz_buglist tr:is(.bz_bugitem, [class*="bz_"]):hover td {
   background-color: var(--pb-surface-2);
+}
+
+/* Code highlighting: BMO's prism colours follow the OS setting, so restate them for forced themes. */
+
+.pb-on .token:is(.comment, .prolog, .doctype, .cdata) {
+  color: light-dark(#57606a, #8b949e);
+}
+
+.pb-on .token:is(.property, .tag, .boolean, .number, .constant, .symbol, .deleted, .atrule, .attr-value, .keyword) {
+  color: light-dark(#a0111f, #ff7b72);
+}
+
+.pb-on .token:is(.selector, .attr-name, .string, .char, .builtin, .inserted) {
+  color: light-dark(#116329, #7ee787);
+}
+
+.pb-on .token:is(.operator, .entity, .url, .variable),
+.pb-on :is(.language-css, .style) .token.string {
+  color: light-dark(#953800, #ffa657);
+}
+
+.pb-on .token:is(.function, .class-name) {
+  color: light-dark(#6639ba, #d2a8ff);
+}
+
+.pb-on .token:is(.regex, .important) {
+  color: light-dark(#0550ae, #79c0ff);
 }
 
 /* Footer */

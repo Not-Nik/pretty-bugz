@@ -4,8 +4,26 @@
   const { Changes, layouts } = globalThis.PrettyBugz;
   const DEFAULTS = { enabled: true, theme: "auto", layouts: true };
   const root = document.documentElement;
+  const CACHE_KEY = "pretty-bugz-settings";
 
-  let settings = DEFAULTS;
+  // storage.local is async; a synchronous copy in the page's localStorage avoids a flash of the wrong theme.
+  function readCache() {
+    try {
+      return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(CACHE_KEY) ?? "{}") };
+    } catch {
+      return DEFAULTS;
+    }
+  }
+
+  function writeCache(value) {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(value));
+    } catch {
+      // Storage can be disabled or full; the cache is only an optimisation.
+    }
+  }
+
+  let settings = readCache();
   let activeChanges = null;
 
   function applyTheme({ enabled, theme }) {
@@ -38,14 +56,17 @@
 
   function update(next) {
     settings = { ...DEFAULTS, ...next };
+    writeCache(settings);
     applyTheme(settings);
     applyLayouts(settings.enabled && settings.layouts);
   }
 
-  // Apply defaults synchronously so the page doesn't flash the stock skin while storage loads.
-  applyTheme(DEFAULTS);
+  applyTheme(settings);
+  root.classList.toggle("pb-layout", settings.enabled && settings.layouts);
 
-  const loaded = browser.storage.local.get(DEFAULTS).then(update);
+  const loaded = browser.storage.local.get(DEFAULTS).then(update, (error) => {
+    console.error("Pretty Bugz: couldn't read settings", error);
+  });
 
   document.addEventListener("DOMContentLoaded", () => {
     loaded.then(() => applyLayouts(settings.enabled && settings.layouts));

@@ -16,7 +16,10 @@ function render({ enabled, theme, layouts }) {
   }
 }
 
-browser.storage.local.get(DEFAULTS).then(render);
+browser.storage.local.get(DEFAULTS).then((settings) => {
+  render(settings);
+  requestAnimationFrame(() => document.body.classList.add("ready"));
+});
 
 enabledInput.addEventListener("change", () => {
   dependent.disabled = !enabledInput.checked;

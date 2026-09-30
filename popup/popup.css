@@ -62,7 +62,8 @@ fieldset.row {
   min-width: 0;
 }
 
-fieldset:disabled {
+/* Only the outer fieldset fades; nested fieldsets are disabled too and would fade twice. */
+#dependent:disabled {
   opacity: .45;
 }
 
@@ -151,4 +152,15 @@ legend {
 fieldset:disabled span,
 fieldset:disabled .switch {
   cursor: default;
+}
+
+/* Settings arrive asynchronously; don't animate the switches into their saved state on open. */
+body:not(.ready) * {
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }

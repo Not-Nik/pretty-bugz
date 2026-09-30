@@ -80,13 +80,13 @@
 }
 
 .pb-on.pb-layout .pb-dc-button.pb-dc-primary {
-  border-color: var(--pb-accent);
+  border-color: var(--pb-accent-fill);
   color: #fff;
-  background-color: var(--pb-accent);
+  background-color: var(--pb-accent-fill);
 }
 
 .pb-on.pb-layout .pb-dc-button.pb-dc-primary:hover {
-  background-color: var(--pb-accent-hover);
+  background-color: var(--pb-accent-fill-hover);
 }
 
 /* Toolbar */

@@ -38,7 +38,7 @@ Pretty Bugz gives bugzilla.mozilla.org a clean, modern look and rebuilds its bus
 - **Request queue, components, keywords, bug history, user profiles and help pages:** filterable cards, a timeline, stats tiles and tables of contents
 
 **Private by design**
-Pretty Bugz only runs on bugzilla.mozilla.org, collects no data, makes no network requests of its own and stores nothing but your three settings in Firefox's local extension storage.
+Pretty Bugz only runs on bugzilla.mozilla.org, collects no data, makes no network requests of its own and stores nothing but your three settings, on your device only.
 
 Pretty Bugz is an independent project and is not affiliated with Mozilla.
 ```
@@ -64,7 +64,7 @@ The listing icon is `store/icon-128.png` (the extension itself ships `icons/icon
 - **Data collection:** none (declared in `manifest.json` as `data_collection_permissions: { required: ["none"] }`).
 - **Privacy policy:** not required, because no data is collected or transmitted. If AMO asks for one, use:
 
-  > Pretty Bugz does not collect, store or transmit any personal data. Its only stored data is the user's display preferences (theme on/off, layouts on/off, light/dark/auto), kept in Firefox's local extension storage on the user's device.
+  > Pretty Bugz does not collect, store or transmit any personal data. Its only stored data is the user's display preferences (theme on/off, layouts on/off, light/dark/auto), kept on the user's device in Firefox's local extension storage, with a copy in bugzilla.mozilla.org's localStorage so the chosen theme applies before the page first paints.
 
 ## Permissions justification
 

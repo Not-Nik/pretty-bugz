@@ -35,7 +35,7 @@ Everything is controlled from the toolbar popup: turn the theme on or off, turn 
 
 ## Privacy
 
-Pretty Bugz only runs on `https://bugzilla.mozilla.org/*`. It collects no data, makes no network requests of its own and only stores your three popup settings in Firefox's local extension storage.
+Pretty Bugz only runs on `https://bugzilla.mozilla.org/*`. It collects no data, makes no network requests of its own and only stores your three popup settings: in Firefox's local extension storage, plus a copy in bugzilla.mozilla.org's `localStorage` (`pretty-bugz-settings`) so the right theme applies before the page first paints.
 
 ## Install
 

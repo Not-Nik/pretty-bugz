@@ -192,14 +192,14 @@
 }
 
 .pb-on.pb-layout .pb-buglist .pb-tool.pb-tool-primary {
-  border-color: var(--pb-accent);
+  border-color: var(--pb-accent-fill);
   color: #fff;
-  background-color: var(--pb-accent);
+  background-color: var(--pb-accent-fill);
 }
 
 .pb-on.pb-layout .pb-buglist .pb-tool.pb-tool-primary:hover {
-  border-color: var(--pb-accent-hover);
-  background-color: var(--pb-accent-hover);
+  border-color: var(--pb-accent-fill-hover);
+  background-color: var(--pb-accent-fill-hover);
 }
 
 .pb-on.pb-layout .pb-menu {
@@ -288,9 +288,9 @@
 }
 
 .pb-on.pb-layout .pb-menu-panel #remember {
-  border-color: var(--pb-accent);
+  border-color: var(--pb-accent-fill);
   color: #fff;
-  background-color: var(--pb-accent);
+  background-color: var(--pb-accent-fill);
   font-size: var(--font-size-medium);
 }
 
