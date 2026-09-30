@@ -23,7 +23,7 @@
 
   function buildHeader(main, table, changes) {
     const head = $(".bz_query_head", main);
-    const resultCount = $(":scope > span.bz_result_count", main);
+    const resultCount = $("span.bz_result_count", main);
     // Without an explicit limit BMO caps results (500) and offers the only link to the rest here.
     const seeAll = resultCount?.querySelector('a[href*="limit=0"]');
     const count = resultCount?.textContent.match(/\d[\d,]*/)?.[0];
@@ -45,8 +45,14 @@
         h("a", { href: seeAll.href, text: "Show all results" })));
     }
 
+    // The search terms and the link to change them belong together.
     const description = $("ul.search_description", main);
     if (description?.children.length) changes.move(description, meta);
+    const edit = $("#edit-search", main);
+    if (edit) {
+      changes.move(edit, meta);
+      changes.addClass(edit, "pb-buglist-edit");
+    }
     const timestamp = $(".bz_query_timestamp", head ?? main);
     if (timestamp) changes.move(timestamp, meta);
     const quip = $(".bz_quip", head ?? main);
@@ -81,7 +87,6 @@
     }
 
     const links = $("td.bz_query_links", main);
-    const edit = $("#edit-search", main);
     const columns = links && $$('a[href*="colchange.cgi"]', links)[0];
     const several = $("#change-several", main);
     const newBug = $("p.bz_query_single_product a", main);
@@ -90,10 +95,10 @@
       end.append(h("a", { class: "pb-tool", href: newBug.href, text: "New bug", title: newBug.textContent.trim() }));
       changes.addClass(newBug.parentElement, "pb-hidden");
     }
-    if (edit) changes.move(edit, end);
+    if (table) end.append(densityToggle(table, changes));
     if (columns) changes.move(columns, end);
     if (several) changes.move(several, end);
-    for (const link of [edit, columns, several]) {
+    for (const link of [columns, several]) {
       if (link) changes.addClass(link, "pb-tool");
     }
 
@@ -145,13 +150,40 @@
     return filterInput;
   }
 
+  // Compact rows fit ~40% more bugs on screen; the choice is remembered across lists.
+  function densityToggle(table, changes) {
+    const group = h("div", { class: "pb-density", role: "group", "aria-label": "Row density" });
+    const buttons = ["compact", "comfortable"].map((value) => {
+      const button = h("button", { type: "button", class: "pb-density-option", "aria-pressed": "false", text: value === "compact" ? "Compact" : "Comfortable" });
+      button.addEventListener("click", () => {
+        set(value);
+        browser.storage.local.set({ buglistDensity: value });
+      });
+      group.append(button);
+      return [value, button];
+    });
+    const set = (value) => {
+      table.setAttribute("data-pb-density", value);
+      for (const [option, button] of buttons) button.setAttribute("aria-pressed", String(option === value));
+    };
+    changes.attr(table, "data-pb-density", "compact");
+    set("compact");
+    browser.storage.local.get({ buglistDensity: "compact" }).then(({ buglistDensity }) => {
+      if (group.isConnected) set(buglistDensity);
+    }, () => {});
+    return group;
+  }
+
   // Cells show abbreviations ("UNCO") or only icons (bug type); the full words live in title/aria-label.
   function searchText(row) {
     const labels = $$("[title], [aria-label]", row).map((node) => `${node.title} ${node.getAttribute("aria-label") ?? ""}`);
     return `${row.textContent} ${labels.join(" ")}`.replace(/\s+/g, " ").toLowerCase();
   }
 
-  function wireFilter(table, input, changes) {
+  // The filter is kept in the URL (#pb-filter=…) so a filtered list can be shared or reloaded.
+  const HASH = "pb-filter=";
+
+  function wireFilter(table, input, onApply, changes) {
     const rows = $$("tbody tr.bz_bugitem", table);
     const texts = new Map(rows.map((row) => [row, searchText(row)]));
     const counter = input.nextElementSibling;
@@ -173,18 +205,43 @@
       const hidden = form ? hiddenChecked() : 0;
       counter.textContent = [terms.length ? `${shown} of ${rows.length}` : "", hidden ? `${hidden} checked hidden` : ""].filter(Boolean).join(" · ");
       empty.hidden = !(terms.length > 0 && shown === 0);
+      onApply();
     };
 
-    let frame = 0;
+    const originalHash = location.hash;
+    // An absolute URL: relative ones resolve against <base>, which needn't be this origin.
+    const setHash = (hash) => {
+      const url = new URL(location.href);
+      url.hash = hash;
+      if (url.href !== location.href) history.replaceState(history.state, "", url.href);
+    };
+    const saveHash = () => {
+      const value = input.value.trim();
+      setHash(value ? `${HASH}${encodeURIComponent(value)}` : originalHash.startsWith(`#${HASH}`) ? "" : originalHash);
+    };
+    if (originalHash.startsWith(`#${HASH}`)) {
+      try {
+        input.value = decodeURIComponent(originalHash.slice(HASH.length + 1));
+      } catch {
+        // Malformed; start unfiltered.
+      }
+    }
+
+    // Debounced: on lists of thousands of rows, filtering on every keystroke would lag typing.
+    let timer = 0;
     changes.listen(input, "input", () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(apply);
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        apply();
+        saveHash();
+      }, rows.length > 500 ? 120 : 30);
     });
     changes.listen(input, "keydown", (event) => {
       if (event.key === "Enter") event.preventDefault();
       if (event.key === "Escape") {
         input.value = "";
         apply();
+        saveHash();
         input.blur();
       }
     });
@@ -198,9 +255,75 @@
       });
     }
     changes.defer(() => {
-      cancelAnimationFrame(frame);
+      clearTimeout(timer);
       for (const row of rows) row.hidden = false;
+      setHash(originalHash);
     });
+    if (input.value) apply();
+  }
+
+  // "Change Several Bugs": a sticky bar with the selection count (and how many the filter hides),
+  // Select visible / Clear, a jump to BMO's edit form, shift-click ranges and x to toggle a row.
+  function wireTweak(table, changes) {
+    const form = table.closest("form[name=changeform]");
+    const boxes = $$('tbody tr.bz_bugitem input[type=checkbox][name^="id_"]', table);
+    if (!form || !boxes.length) return () => {};
+
+    const status = h("span", { class: "pb-tweak-status", "aria-live": "polite" });
+    const setAll = (checked) => {
+      for (const box of boxes) {
+        if (!box.closest("tr").hidden) box.checked = checked;
+      }
+      update();
+    };
+    const editForm = form.querySelector("#form") ?? form.querySelector("#commit");
+    const bar = h("div", { class: "pb-tweak-bar", role: "group", "aria-label": "Selected bugs" },
+      status,
+      h("button", { type: "button", class: "secondary", text: "Select visible", onclick: () => setAll(true) }),
+      h("button", { type: "button", class: "secondary", text: "Clear", onclick: () => setAll(false) }),
+      editForm ? h("button", { type: "button", class: "primary", text: "Edit selected ↓", onclick: () => {
+        editForm.scrollIntoView({ block: "start" });
+        editForm.querySelector("select, input:not([type=hidden]), textarea")?.focus({ preventScroll: true });
+      } }) : null);
+    changes.insert(bar, table.parentNode, table.nextSibling);
+
+    function update() {
+      const checked = boxes.filter((box) => box.checked);
+      const hidden = checked.filter((box) => box.closest("tr").hidden).length;
+      status.textContent = `${checked.length} selected${hidden ? ` (${hidden} hidden by the filter)` : ""}`;
+      bar.dataset.empty = String(checked.length === 0);
+    }
+
+    let last = null;
+    changes.listen(table, "click", (event) => {
+      const box = event.target.closest?.('input[type=checkbox][name^="id_"]');
+      if (!box) return;
+      if (event.shiftKey && last && last !== box) {
+        const [from, to] = [boxes.indexOf(last), boxes.indexOf(box)].sort((a, b) => a - b);
+        for (const other of boxes.slice(from, to + 1)) {
+          if (!other.closest("tr").hidden) other.checked = box.checked;
+        }
+      }
+      last = box;
+      update();
+    });
+    changes.listen(form, "change", update);
+    // BMO's Check All / Uncheck All set .checked without events.
+    changes.listen(form, "click", (event) => {
+      if (event.target.matches?.("#check_all, #uncheck_all")) setTimeout(update);
+    });
+    changes.listen(document, "keydown", (event) => {
+      if (event.key !== "x" || event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) return;
+      const row = document.activeElement?.closest?.("tr.bz_bugitem");
+      const box = row && $('input[type=checkbox][name^="id_"]', row);
+      if (!box) return;
+      event.preventDefault();
+      box.checked = !box.checked;
+      last = box;
+      update();
+    });
+    update();
+    return update;
   }
 
   // j/k move real focus to each row's summary link, so Enter, screen readers and the focus ring all
@@ -264,15 +387,17 @@
 
       const hero = buildHeader(main, table, changes);
       const input = buildToolbar(main, hero, table, changes);
-      for (const node of $$(":scope > hr, :scope > span.bz_result_count, :scope > br", main)) {
+      for (const node of $$(":scope > hr, span.bz_result_count, :scope > br", main)) {
         changes.addClass(node, "pb-hidden");
       }
 
       if (table) {
-        if (input) wireFilter(table, input, changes);
-        wireKeyboard(table, input, changes);
-        const hint = h("p", { class: "pb-buglist-hint" }, h("kbd", { text: "j" }), " ", h("kbd", { text: "k" }), " move · ", h("kbd", { text: "Enter" }), " open · ", h("kbd", { text: "O" }), " new tab · ", h("kbd", { text: "/" }), " filter");
+        const hint = h("p", { class: "pb-buglist-hint" }, h("kbd", { text: "j" }), " ", h("kbd", { text: "k" }), " move · ", h("kbd", { text: "Enter" }), " open · ", h("kbd", { text: "Shift" }), "+", h("kbd", { text: "O" }), " new tab · ", h("kbd", { text: "/" }), " filter");
         changes.insert(hint, table.parentNode, table.nextSibling);
+        const onFilter = wireTweak(table, changes);
+        if ($('input[name^="id_"]', table)) hint.append(" · ", h("kbd", { text: "x" }), " select");
+        if (input) wireFilter(table, input, onFilter, changes);
+        wireKeyboard(table, input, changes);
       }
       buildEmptyState(main, changes);
     },

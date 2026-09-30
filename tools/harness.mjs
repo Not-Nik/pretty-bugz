@@ -35,6 +35,7 @@ const PAGES = [
   { name: "query-simple.html", url: "/query.cgi?format=specific", expect: "simple-search" },
   { name: "query-instant.html", url: "/query.cgi?format=instant", expect: "instant-search" },
   { name: "buglist.html", url: "/buglist.cgi?product=Firefox&component=Tabbed%20Browser&resolution=---&limit=40", expect: "buglist", chrome: true },
+  { name: "buglist.html", label: "buglist.html (tweak)", url: "/buglist.cgi?product=Firefox&component=Tabbed%20Browser&resolution=---&limit=40&tweak=1", setup: "buglist-tweak.js", expect: "buglist" },
   { name: "requests.html", url: "/request.cgi?action=queue&type=needinfo&product=Firefox&component=Tabbed%20Browser&group=requestee&do_union=0", expect: "requests" },
   { name: "components.html", url: "/describecomponents.cgi?product=Firefox", expect: "components" },
   { name: "activity.html", url: "/show_activity.cgi?id=1000000", expect: "activity" },

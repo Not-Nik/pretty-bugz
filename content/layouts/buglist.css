@@ -87,6 +87,11 @@
   font-weight: 500;
 }
 
+.pb-on.pb-layout .pb-buglist-meta a.pb-buglist-edit {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
 .pb-on.pb-layout .pb-buglist-meta .bz_query_timestamp {
   color: var(--pb-text-3);
   font-size: var(--font-size-small);
@@ -320,6 +325,61 @@
   font-size: var(--font-size-medium);
 }
 
+/* Density toggle */
+
+.pb-on.pb-layout .pb-density {
+  display: inline-flex;
+  gap: 2px;
+  border-radius: 8px;
+  padding: 3px;
+  background-color: var(--pb-surface-3);
+}
+
+.pb-on.pb-layout button.pb-density-option {
+  border: 0;
+  border-radius: 6px;
+  padding: 3px 10px !important;
+  color: var(--pb-text-2);
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--font-size-small);
+}
+
+.pb-on.pb-layout button.pb-density-option[aria-pressed="true"] {
+  color: var(--pb-text);
+  background-color: var(--pb-surface);
+  box-shadow: 0 1px 2px var(--pb-shadow-color), 0 0 0 1px var(--pb-border);
+  font-weight: 600;
+}
+
+/* Change Several Bugs: selection bar */
+
+.pb-on.pb-layout .pb-tweak-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  position: sticky;
+  bottom: 12px;
+  z-index: 20;
+  margin: 12px 0;
+  border: 1px solid var(--pb-border);
+  border-radius: 12px;
+  padding: 8px 12px 8px 16px;
+  background-color: var(--pb-surface);
+  box-shadow: var(--pb-shadow-lg);
+}
+
+.pb-on.pb-layout .pb-tweak-status {
+  margin-right: auto;
+  color: var(--pb-text);
+  font-weight: 600;
+}
+
+.pb-on.pb-layout .pb-tweak-bar[data-empty="true"] .primary {
+  display: none;
+}
+
 /* Table */
 
 .pb-on.pb-layout .pb-buglist table.bz_buglist {
@@ -376,10 +436,24 @@
 
 .pb-on.pb-layout .pb-buglist table.bz_buglist tbody td {
   border-bottom: 1px solid var(--pb-border);
-  padding: 7px 10px;
+  padding: 9px 10px;
   color: var(--pb-text-2);
   font-size: var(--font-size-small);
   vertical-align: middle;
+}
+
+.pb-on.pb-layout .pb-buglist table.bz_buglist[data-pb-density="compact"] tbody td {
+  padding-block: 4px;
+  line-height: 1.35;
+}
+
+/* Severity at a glance: a stripe on S1 and S2 rows. */
+.pb-on.pb-layout .pb-buglist table.bz_buglist tbody tr.bz_S1 > td:first-child {
+  box-shadow: inset 3px 0 0 var(--pb-danger);
+}
+
+.pb-on.pb-layout .pb-buglist table.bz_buglist tbody tr.bz_S2 > td:first-child {
+  box-shadow: inset 3px 0 0 light-dark(#bc4c00, #f0883e);
 }
 
 /* Keep rows reached by j/k or Tab clear of the sticky site header, toolbar and table header. */
