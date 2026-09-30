@@ -8,7 +8,7 @@ Copy these fields into the AMO Developer Hub when submitting a new version.
 - **Add-on URL slug:** `pretty-bugz`
 - **Summary** (max 250 characters):
 
-  > A modern look for bugzilla.mozilla.org with light and dark modes, plus redesigned pages: bugs with a sticky field rail, a one-page new-bug form, filterable bug lists, a live advanced-search summary, regroupable requests and a compact history log.
+  > A modern theme and redesigned, more usable layouts for bugzilla.mozilla.org: cleaner bug pages, a streamlined new-bug form, filterable bug lists, a triage dashboard and dark mode.
 
 - **Categories (Firefox):** Appearance, Other
 - **Tags:** bugzilla, mozilla, developer tools, dark mode, productivity, theme
