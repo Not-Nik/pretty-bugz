@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Pretty Bugz",
   "version": "1.0.0",
-  "description": "A cleaner, more modern look and more usable layouts for bugzilla.mozilla.org.",
+  "description": "A modern look for bugzilla.mozilla.org with light and dark modes, plus redesigned pages: bugs with a sticky field rail, a one-page new-bug form, filterable bug lists, a live advanced-search summary, regroupable requests and a compact history log.",
   "author": "Not-Nik",
   "homepage_url": "https://github.com/Not-Nik/pretty-bugz",
   "icons": {
