@@ -18,6 +18,31 @@
   grid-template-columns: minmax(0, 760px) 240px;
 }
 
+/* The TOC is first in the DOM (for keyboard order) but sits in the right-hand column. */
+.pb-on.pb-layout .pb-article-layout > .pb-article {
+  grid-row: 1;
+  grid-column: 1;
+}
+
+.pb-on.pb-layout .pb-article-layout > .pb-toc-slot {
+  grid-row: 1;
+  grid-column: 2;
+}
+
+.pb-on.pb-layout .pb-toc-slot:empty {
+  display: none;
+}
+
+@media (width >= 1100px) {
+  .pb-on.pb-layout .pb-has-toc .pb-handwritten-toc {
+    display: none;
+  }
+}
+
+.pb-on.pb-layout .pb-article td > p:first-child {
+  margin-top: 0;
+}
+
 .pb-on.pb-layout .pb-article {
   border: 1px solid var(--pb-border);
   border-radius: 14px;
@@ -149,7 +174,6 @@
 .pb-on.pb-layout .pb-toc {
   position: sticky;
   top: calc(var(--global-header-height) + 24px);
-  align-self: start;
   max-height: calc(100vh - var(--global-header-height) - 48px);
   overflow: auto;
   font-size: var(--font-size-small);
@@ -195,7 +219,7 @@
   text-decoration: none;
 }
 
-.pb-on.pb-layout .pb-toc-list a.pb-toc-active {
+.pb-on.pb-layout .pb-toc-list a[aria-current] {
   border-left-color: var(--pb-accent);
   color: var(--pb-accent);
   font-weight: 600;
@@ -298,13 +322,23 @@
 }
 
 .pb-on.pb-layout .pb-forms-card li a::after {
-  content: "→";
+  content: "→" / "";
   color: var(--pb-text-3);
   transition: transform .15s, color .15s;
 }
 
 .pb-on.pb-layout .pb-forms-card li a.pb-forms-external::after {
-  content: "↗";
+  content: "↗" / "(external site)";
+}
+
+.pb-on.pb-layout .pb-forms-empty {
+  margin: 24px 0;
+  color: var(--pb-text-2);
+  text-align: center;
+}
+
+.pb-on.pb-layout .pb-forms-empty[hidden] {
+  display: none;
 }
 
 .pb-on.pb-layout .pb-forms-card li a:hover {
@@ -483,7 +517,12 @@
   background-color: var(--pb-surface);
   box-shadow: var(--pb-shadow);
   scroll-margin-top: calc(var(--global-header-height) + 16px);
-  overflow: hidden;
+  overflow-x: auto;
+}
+
+/* The card clips overflow, so draw the focus ring inside. */
+.pb-on.pb-layout .pb-at-list :focus-visible {
+  outline-offset: -2px;
 }
 
 .pb-on.pb-layout .pb-at-list.pb-at-empty {
@@ -662,11 +701,13 @@
   letter-spacing: -.025em;
 }
 
+/* Report parameter rows can be wider than a narrow window; scroll inside the card. */
 .pb-on.pb-layout .pb-tool-panel {
   padding: 18px 20px;
+  overflow-x: auto;
 }
 
-.pb-on.pb-layout .pb-tool-panel table {
+.pb-on.pb-layout .pb-tool-panel form > table {
   border-collapse: separate;
   border-spacing: 10px 8px;
   margin: -8px -10px;
@@ -683,7 +724,6 @@
 .pb-on.pb-layout .pb-tool-panel textarea {
   box-sizing: border-box;
   width: 100%;
-  min-height: 200px;
 }
 
 .pb-on.pb-layout .pb-page-tool #main-inner table.standard:not(.pb-tool-panel table) {
@@ -714,13 +754,33 @@
   font-size: var(--font-size-small);
 }
 
+/* Narrow: the page's own contents list takes over if it has one; otherwise ours sits on top. */
 @media (width < 1100px) {
   .pb-on.pb-layout .pb-article-layout.pb-has-toc {
     grid-template-columns: minmax(0, 760px);
+    gap: 16px;
+  }
+
+  .pb-on.pb-layout .pb-article-layout > .pb-toc-slot {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .pb-on.pb-layout .pb-article-layout.pb-has-toc > .pb-article {
+    grid-row: 2;
+  }
+
+  .pb-on.pb-layout .pb-has-handwritten-toc > .pb-toc-slot {
+    display: none;
   }
 
   .pb-on.pb-layout .pb-toc {
-    display: none;
+    position: static;
+    max-height: none;
+    border: 1px solid var(--pb-border);
+    border-radius: var(--pb-radius);
+    padding: 14px 16px;
+    background-color: var(--pb-surface);
   }
 }
 
@@ -731,9 +791,5 @@
 
   .pb-on.pb-layout .pb-at-hero-side {
     align-items: flex-start;
-  }
-
-  .pb-on.pb-layout .pb-at-list table.bug-list :is(th, td):is(.priority, .severity, :nth-child(2), :nth-child(3)) {
-    display: none;
   }
 }

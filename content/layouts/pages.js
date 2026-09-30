@@ -20,10 +20,22 @@
     "cookies.html",
     "voting.html",
   ]);
-  const OWN_LAYOUTS = new Set([...ARTICLES, "custom_forms.html", "attention.html", "mydashboard.html", "user_profile.html"]);
+  // Report pages whose form + results we've checked against BMO's templates. Others (admin pages,
+  // JS-built tables, splinter, bounty forms, …) keep BMO's layout.
+  const TOOL_PAGES = new Set([
+    "user_activity.html",
+    "triage_reports.html",
+    "triage_owners.html",
+    "release_tracking_report.html",
+    "group_members.html",
+    "group_membership.html",
+    "query_database.html",
+    "linkify.html",
+  ]);
 
   // page.cgi ids end in .html; show_bug.cgi and friends also take a (numeric) id.
   const pageId = () => {
+    if (!location.pathname.endsWith("/page.cgi")) return "";
     const id = new URLSearchParams(location.search).get("id") ?? "";
     return id.endsWith(".html") ? id : "";
   };
@@ -63,7 +75,9 @@
         used.add(id);
         setId(heading, id, changes);
       }
-      const anchor = h("a", { class: "pb-heading-anchor", href: `#${heading.id}`, "aria-label": "Link to this section", text: "#" });
+      // A mouse affordance for copying links; the table of contents has the same links for keyboards
+      // and screen readers, so keep it out of the heading's name and the tab order.
+      const anchor = h("a", { class: "pb-heading-anchor", href: `#${heading.id}`, "aria-hidden": "true", tabindex: "-1", text: "#" });
       changes.insert(anchor, heading);
       list.append(h("li", { class: `pb-toc-${heading.tagName.toLowerCase()}` },
         h("a", { href: `#${heading.id}`, text: clean(heading.textContent).replace(/#$/, "").trim() })));
@@ -72,12 +86,16 @@
     const toc = h("nav", { class: "pb-toc", "aria-label": "On this page" }, h("span", { class: "pb-toc-title", text: "On this page" }), list);
 
     const links = [...list.querySelectorAll("a")];
+    const header = document.getElementById("header")?.offsetHeight ?? 56;
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue;
-        for (const link of links) link.classList.toggle("pb-toc-active", link.hash === `#${entry.target.id}`);
+        for (const link of links) {
+          if (link.getAttribute("href") === `#${entry.target.id}`) link.setAttribute("aria-current", "location");
+          else link.removeAttribute("aria-current");
+        }
       }
-    }, { rootMargin: "-80px 0px -70% 0px" });
+    }, { rootMargin: `-${header + 24}px 0px -70% 0px` });
     for (const heading of headings) observer.observe(heading);
     changes.defer(() => observer.disconnect());
 
@@ -100,6 +118,8 @@
       const body = h("article", { class: "pb-article" });
       changes.insert(wrapper, article, article.firstChild);
       wrapper.append(body);
+      const tocSlot = h("div", { class: "pb-toc-slot" });
+      wrapper.prepend(tocSlot);
 
       for (const node of [...article.childNodes].filter((n) => n !== wrapper)) {
         if (node.nodeType === Node.ELEMENT_NODE || clean(node.textContent)) changes.move(node, body);
@@ -107,18 +127,24 @@
 
       if (!$(":scope > h1", body)) body.prepend(h("h1", { class: "pb-article-title", text: pageTitle() }));
 
-      // The hand-written tables of contents duplicate the generated one.
+      // Hand-written tables of contents duplicate the generated one on wide screens (CSS hides them
+      // there); on narrow screens, where the side TOC doesn't fit, they're the navigation.
+      let handwritten = false;
       for (const list of $$(":scope > ul", body)) {
         const links = $$("a", list);
         if (list.classList.contains("bz_toc") || (links.length > 2 && links.every((a) => a.getAttribute("href")?.startsWith("#")))) {
-          changes.addClass(list, "pb-hidden");
+          changes.addClass(list, "pb-handwritten-toc");
+          handwritten = true;
         }
       }
 
+      // The TOC comes first in the DOM so keyboard and screen-reader users reach it before the
+      // article; CSS puts it in the right-hand column.
       const toc = buildToc(body, changes);
       if (toc) {
-        wrapper.append(toc);
-        changes.addClass(wrapper, "pb-has-toc");
+        tocSlot.append(toc);
+        wrapper.classList.add("pb-has-toc");
+        if (handwritten) wrapper.classList.add("pb-has-handwritten-toc");
       }
     },
   });
@@ -140,11 +166,14 @@
 
       const input = h("input", { type: "search", class: "pb-filter pb-forms-search", placeholder: "Filter forms…", "aria-label": "Filter forms", autocomplete: "off" });
       const grid = h("div", { class: "pb-forms-grid" });
+      const status = h("span", { class: "pb-filter-count", "aria-live": "polite" });
+      const empty = h("p", { class: "pb-forms-empty", hidden: true, text: "No forms match the filter." });
       const intro = h("header", { class: "pb-forms-hero" },
-        h("p", { class: "pb-forms-lead", text: "Specialised forms that route requests straight to the right team." }),
-        input);
+        h("p", { class: "pb-forms-lead", text: "Specialized forms that route requests straight to the right team." }),
+        input, status);
       changes.insert(intro, root, heading?.nextSibling ?? root.firstChild);
       changes.insert(grid, root, intro.nextSibling);
+      changes.insert(empty, root, grid.nextSibling);
 
       const cards = [];
       for (const { title, list } of groups) {
@@ -164,7 +193,13 @@
 
       changes.listen(input, "input", () => {
         const terms = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
-        for (const { card, text } of cards) card.hidden = !terms.every((t) => text.includes(t));
+        let shown = 0;
+        for (const { card, text } of cards) {
+          card.hidden = !terms.every((t) => text.includes(t));
+          if (!card.hidden) shown++;
+        }
+        status.textContent = terms.length ? `${shown} of ${cards.length} products` : "";
+        empty.hidden = shown > 0;
       });
       changes.listen(input, "keydown", (event) => {
         if (event.key === "Enter") event.preventDefault();
@@ -192,14 +227,12 @@
       const refresh = $(":scope > #auto_refresh-container", root);
       const docs = $(":scope > p > a[href*='attention-dashboard']", root)?.parentElement;
       const note = [...root.querySelectorAll(":scope > p")].find((p) => p !== docs);
-      const who = $("#who", root)?.value;
 
       const heroMain = h("div", { class: "pb-at-hero-main" });
       const heroSide = h("div", { class: "pb-at-hero-side" });
       const hero = h("header", { class: "pb-at-hero" }, heroMain, heroSide);
       changes.insert(hero, root, root.firstChild);
       if (title) changes.move(title, heroMain);
-      if (who) heroMain.append(h("p", { class: "pb-at-who", text: `For ${who}` }));
       if (docs) changes.move(docs, heroMain);
       if (form) changes.move(form, heroSide);
       if (refresh) changes.move(refresh, heroSide);
@@ -243,10 +276,13 @@
         const rows = table ? table.querySelectorAll("tbody tr").length : 0;
         if (rows > TRUNCATE_AFTER) {
           card.classList.add("pb-at-truncated");
-          const more = h("button", { type: "button", class: "pb-at-more", text: `Show all ${rows}` });
+          const more = h("button", { type: "button", class: "pb-at-more", "aria-expanded": "false", "aria-controls": card.id, text: `Show all ${rows}` });
           more.addEventListener("click", () => {
             const truncated = card.classList.toggle("pb-at-truncated");
+            more.setAttribute("aria-expanded", String(!truncated));
             more.textContent = truncated ? `Show all ${rows}` : "Show fewer";
+            // Collapsing a long list would otherwise leave the view far below the card.
+            if (truncated) card.scrollIntoView({ block: "nearest" });
           });
           card.append(more);
         }
@@ -264,17 +300,15 @@
     name: "page-tool",
 
     match() {
-      const id = pageId();
       const root = main();
-      return !!id && !OWN_LAYOUTS.has(id) && !!root && !!$("form", root)
-        && !$(":scope > table#user_profile_table, :scope > #attention", root);
+      return TOOL_PAGES.has(pageId()) && !!root && !!$("form", root);
     },
 
     apply(changes) {
       const root = main();
       changes.addClass(document.body, "pb-page-tool");
 
-      if (!$(":scope > h1, :scope > div > h1", root)) {
+      if (!$("h1, h2", root)) {
         const title = h("h1", { class: "pb-tool-title", text: pageTitle() });
         changes.insert(title, root, root.firstChild);
       }
