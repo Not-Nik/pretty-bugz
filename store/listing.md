@@ -36,7 +36,8 @@ Pretty Bugz gives bugzilla.mozilla.org a clean, modern look and rebuilds its bus
 - **Bug lists:** full-width results with compact rows, instant filtering you can share as a link, Export and Save menus, j/k keyboard navigation, and a selection bar for changing several bugs at once
 - **Advanced search:** the triage fields up front, filter boxes for long product and component lists, and a sticky summary of everything you're searching for, with one-click removal
 - **What needs my attention:** a triage dashboard with counts per list, priority tiers and collapsed empty lists
-- **Request queue, components, keywords, bug history, user profiles and help pages:** filterable cards, a timeline, stats tiles and tables of contents
+- **Request queue, components, keywords, bug history, user profiles and help pages:** regroupable request lists sorted by age, filterable component and keyword lists, a compact change log with per-field history, stats tiles and tables of contents
+- **Instant search:** see all matches or file the bug straight from the summary you typed
 
 **Private by design**
 Pretty Bugz only runs on bugzilla.mozilla.org, collects no data, makes no network requests of its own and stores nothing but your three settings, on your device only.

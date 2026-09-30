@@ -701,10 +701,20 @@
   letter-spacing: -.025em;
 }
 
-/* Report parameter rows can be wider than a narrow window; scroll inside the card. */
+/* The report form as a filter bar: parameter rows wrap instead of running off narrow windows. */
 .pb-on.pb-layout .pb-tool-panel {
-  padding: 18px 20px;
-  overflow-x: auto;
+  padding: 14px 20px;
+}
+
+.pb-on.pb-layout .pb-tool-panel form > table > tbody > tr {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 4px;
+}
+
+.pb-on.pb-layout .pb-tool-panel form > table > tbody > tr > :is(th, td) {
+  display: block;
 }
 
 .pb-on.pb-layout .pb-tool-panel form > table {
@@ -726,11 +736,14 @@
   width: 100%;
 }
 
+/* Results: the main card of the page. */
 .pb-on.pb-layout .pb-page-tool #main-inner table.standard:not(.pb-tool-panel table) {
   border-collapse: separate;
   border-spacing: 0;
+  margin-top: 16px;
   border: 1px solid var(--pb-border);
   border-radius: var(--pb-radius);
+  width: 100%;
   background-color: var(--pb-surface);
   box-shadow: var(--pb-shadow);
   overflow: hidden;
@@ -738,14 +751,16 @@
 
 .pb-on.pb-layout .pb-page-tool #main-inner table.standard:not(.pb-tool-panel table) th {
   border-bottom: 1px solid var(--pb-border);
-  padding: 9px 12px;
+  padding: 8px 12px;
   color: var(--pb-text-2);
   background-color: var(--pb-surface-2);
-  font-size: var(--font-size-x-small);
+  font-size: var(--font-size-small);
   font-weight: 600;
-  letter-spacing: .04em;
   text-align: left;
-  text-transform: uppercase;
+}
+
+.pb-on.pb-layout .pb-page-tool #main-inner table.standard:not(.pb-tool-panel table) tr:hover td {
+  background-color: var(--pb-surface-2);
 }
 
 .pb-on.pb-layout .pb-page-tool #main-inner table.standard:not(.pb-tool-panel table) td {

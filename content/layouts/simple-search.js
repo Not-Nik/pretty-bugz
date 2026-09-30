@@ -122,6 +122,42 @@
       changes.addClass(table, "pb-hidden");
       const br = results.previousElementSibling;
       if (br?.tagName === "BR") changes.addClass(br, "pb-hidden");
+      wireInstantActions(content, product, results, changes);
     },
   });
+
+  // People check for duplicates before filing, so finish the job: say what's happening, offer
+  // every match (Enter) and a way to file the bug with the summary already typed.
+  function wireInstantActions(content, product, results, changes) {
+    const status = h("p", { class: "pb-ss-status", role: "status" });
+    const seeAll = h("a", { class: "pb-ss-action", text: "See all matching bugs" });
+    const file = h("a", { class: "pb-ss-action pb-ss-file" });
+    const bar = h("div", { class: "pb-ss-actions" }, status, h("span", { class: "pb-ss-links" }, seeAll, file));
+    changes.insert(bar, results.parentNode, results);
+
+    const update = () => {
+      const query = content.value.trim();
+      const productName = product?.value ?? "";
+      const rows = results.querySelectorAll("table tbody tr").length;
+      const message = results.querySelector(".message")?.textContent.trim();
+      if (query.length < 4) status.textContent = query ? "Keep typing: searches start at 4 characters." : "";
+      else if (rows) status.textContent = rows >= 20 ? "Showing the 20 closest matches." : `${rows} possible ${rows === 1 ? "duplicate" : "duplicates"}.`;
+      else status.textContent = message ?? "";
+
+      const params = new URLSearchParams({ query_format: "advanced", short_desc_type: "allwordssubstr", short_desc: query });
+      if (productName) params.set("product", productName);
+      seeAll.href = `buglist.cgi?${params}`;
+      file.href = `enter_bug.cgi?${new URLSearchParams({ product: productName, short_desc: query })}`;
+      file.textContent = `Not listed? File a bug in ${productName}`;
+      bar.hidden = !query;
+      file.hidden = !productName;
+    };
+    changes.listen(content, "input", update);
+    changes.listen(content, "keydown", (event) => {
+      if (event.key === "Enter" && content.value.trim()) location.href = seeAll.href;
+    });
+    if (product) changes.listen(product, "change", update);
+    changes.observe(results, update, { childList: true, subtree: true, characterData: true });
+    update();
+  }
 })();

@@ -21,16 +21,16 @@ A Firefox extension that gives [bugzilla.mozilla.org](https://bugzilla.mozilla.o
 | `enter_bug.cgi` product chooser, `describecomponents.cgi` | Big search box, a grid of product cards you can click anywhere on |
 | `buglist.cgi` | Full-width list with an honest result count (and Show all when BMO capped it), search chips with Edit, a sticky toolbar with an instant filter kept in the URL, Compact/Comfortable rows, Export/Save menus, severity stripes, `j`/`k`/Enter/`Shift+O`/`/` shortcuts, and in Change Several Bugs mode a selection bar with shift-click ranges and `x` |
 | `query.cgi?format=advanced` | Type, Severity and Priority next to Product and Status, filter boxes for the lists, "N active" badges on collapsed sections, and a sticky "Your search" rail listing every criterion (click to jump, × to remove) next to Sort and Search |
-| `query.cgi?format=specific` / `instant` | A search-engine style hero |
+| `query.cgi?format=specific` / `instant` | A search-engine style hero; instant search adds a live status, See all matching bugs (also on Enter) and "Not listed? File a bug" with the summary filled in |
 | `request.cgi` | Collapsible filters, readable request rows oldest first with ages, a Group by switch (none, requestee, requester, flag, product), a sticky rail of groups with counts, and a filter box |
-| `describecomponents.cgi?product=…` | Product header with quick actions, filterable component cards, A–Z jump |
+| `describecomponents.cgi?product=…` | Product header with quick actions, a filterable alphabetical list of components with full descriptions, A–Z jump |
 | `show_activity.cgi` | A compact day-grouped change log with field chips, person filter, Hide CC, Newest first, a value history for a single field (e.g. P3 → P2 → P1), and the filter kept in the URL |
-| `describekeywords.cgi` | Filterable, sortable keyword cards |
+| `describekeywords.cgi` | A dense, filterable keyword table with sortable Keyword and Bugs columns and an Include inactive switch |
 | `user_profile` | Profile header, stats tiles, activity-by-product bars |
 | `page.cgi?id=attention.html` | A triage dashboard: counts per list, priority tiers, collapsed empty lists |
 | `page.cgi` help pages | Readable articles with a sticky table of contents |
 | `page.cgi?id=custom_forms.html` | A card grid of custom bug forms |
-| Other `page.cgi` reports | A page title and the form in a panel |
+| `page.cgi` reports (user activity, triage, release tracking, group members, …) | A page title, the form as a wrapping filter bar and the results as a card |
 
 Everything is controlled from the toolbar popup: turn the theme on or off, turn the layouts on or off, and pick Auto / Light / Dark. Changes apply immediately, without reloading.
 

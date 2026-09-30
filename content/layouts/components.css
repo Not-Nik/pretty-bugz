@@ -139,35 +139,53 @@
   text-decoration: none;
 }
 
-/* Component cards */
+/* Components: one row each (name, full description, actions), alphabetical top to bottom.
+   Descriptions carry routing rules ("file in Core instead"), so they're never clamped. */
 
 .pb-on.pb-layout .pb-components section.product > .list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 12px;
+  display: block;
+  overflow: clip;
+  border: 1px solid var(--pb-border);
+  border-radius: var(--pb-radius);
+  background-color: var(--pb-surface);
+  box-shadow: var(--pb-shadow);
 }
 
 .pb-on.pb-layout .pb-components section.component {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(160px, 240px) minmax(0, 1fr) auto;
+  grid-template-areas: "name description actions";
+  align-items: start;
+  gap: 4px 24px;
   margin: 0;
-  border: 1px solid var(--pb-border);
-  border-radius: var(--pb-radius);
-  padding: 16px 16px 12px;
-  background-color: var(--pb-surface);
-  box-shadow: var(--pb-shadow);
+  border: 0;
+  border-top: 1px solid var(--pb-border);
+  border-radius: 0;
+  padding: 12px 16px;
+  background: transparent;
+  box-shadow: none;
   scroll-margin-top: calc(var(--global-header-height) + 72px);
-  transition: border-color .15s, box-shadow .15s;
+}
+
+.pb-on.pb-layout .pb-components section.component:first-child {
+  border-top: 0;
 }
 
 .pb-on.pb-layout .pb-components section.component:hover {
-  border-color: color-mix(in srgb, var(--pb-accent) 45%, var(--pb-border));
-  box-shadow: var(--pb-shadow-lg);
+  background-color: var(--pb-surface-2);
 }
 
 .pb-on.pb-layout .pb-components section.component:is(.highlight, .pb-dc-target) {
-  border: 1px solid var(--pb-accent);
-  box-shadow: var(--pb-ring), var(--pb-shadow);
+  background-color: var(--pb-accent-soft);
+  box-shadow: inset 3px 0 0 var(--pb-accent);
+}
+
+.pb-on.pb-layout .pb-components section.component > header {
+  grid-area: name;
+}
+
+.pb-on.pb-layout .pb-components section.component > header ~ div {
+  grid-area: description;
 }
 
 .pb-on.pb-layout .pb-components section.component[hidden] {
@@ -175,10 +193,11 @@
 }
 
 .pb-on.pb-layout .pb-components section.component h2 {
-  margin: 0 0 6px;
-  font-size: 16px;
+  margin: 0;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: -.01em;
+  overflow-wrap: anywhere;
 }
 
 .pb-on.pb-layout .pb-components section.component h2 a {
@@ -190,47 +209,23 @@
 }
 
 .pb-on.pb-layout .pb-components section.component header ~ div {
-  flex: 1 1 auto;
   margin: 0;
   font-size: var(--font-size-small);
 }
 
 .pb-on.pb-layout .pb-components section.component p.description {
-  display: -webkit-box;
-  overflow: hidden;
+  margin: 0;
   color: var(--pb-text-2);
   line-height: 1.55;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
-}
-
-.pb-on.pb-layout .pb-components section.component:has(.pb-dc-more[aria-expanded="true"]) p.description {
-  display: block;
-}
-
-.pb-on.pb-layout button.pb-dc-more {
-  margin-top: 4px;
-  border: 0;
-  padding: 0 !important;
-  color: var(--pb-link);
-  background: transparent;
-  box-shadow: none;
-  font-size: var(--font-size-x-small);
-  font-weight: 600;
-}
-
-.pb-on.pb-layout button.pb-dc-more[hidden] {
-  display: none;
 }
 
 .pb-on.pb-layout .pb-components section.component > footer {
   display: flex;
+  grid-area: actions;
   align-items: center;
   gap: 8px;
-  margin-top: 12px;
-  border-top: 1px solid var(--pb-border);
-  padding-top: 10px;
+  margin: 0;
+  white-space: nowrap;
 }
 
 .pb-on.pb-layout .pb-dc-card-actions {
@@ -260,5 +255,10 @@
 
   .pb-on.pb-layout .pb-dc-letters {
     display: none;
+  }
+
+  .pb-on.pb-layout .pb-components section.component {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "name" "description" "actions";
   }
 }

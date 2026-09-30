@@ -150,6 +150,42 @@
   text-align: center;
 }
 
+/* Instant search: status line and follow-up actions */
+
+.pb-on.pb-layout .pb-ss-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: -16px auto 12px;
+  max-width: 1080px;
+  font-size: var(--font-size-small);
+}
+
+.pb-on.pb-layout .pb-ss-actions[hidden] {
+  display: none;
+}
+
+.pb-on.pb-layout .pb-ss-status {
+  margin: 0;
+  color: var(--pb-text-2);
+}
+
+.pb-on.pb-layout .pb-ss-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.pb-on.pb-layout a.pb-ss-action {
+  font-weight: 600;
+}
+
+.pb-on.pb-layout a.pb-ss-action[hidden] {
+  display: none;
+}
+
 /* Instant search results (Bugzilla.DataTable) */
 
 .pb-on.pb-layout .pb-instant-search #results {

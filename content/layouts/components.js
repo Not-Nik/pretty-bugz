@@ -1,7 +1,8 @@
 "use strict";
 
 // describecomponents.cgi?product=X: product hero with quick actions, a sticky filter with A–Z
-// jumps, and components as a grid of cards with Open bugs / File a bug / Watch actions.
+// jumps, and components as a dense alphabetical list with full descriptions and Open bugs /
+// File a bug / Watch actions.
 (() => {
   const { h, register } = globalThis.PrettyBugz;
 
@@ -56,16 +57,6 @@
         letters.append(h("a", { class: "pb-dc-letter", href: `#${encodeURIComponent(card.id)}`, text: letter }));
       }
 
-      // Clamped descriptions get a "Show more" button when (and while) they overflow.
-      const clamps = new Map();
-      const measure = new ResizeObserver((entries) => {
-        for (const { target } of entries) {
-          const more = clamps.get(target);
-          if (more.getAttribute("aria-expanded") === "false") more.hidden = target.scrollHeight <= target.clientHeight + 1;
-        }
-      });
-      changes.defer(() => measure.disconnect());
-
       for (const card of cards) {
         const footer = $(":scope > footer", card);
         const bugsLink = $("h2 a", card);
@@ -73,19 +64,6 @@
           bugsLink ? h("a", { href: bugsLink.getAttribute("href"), text: "Open bugs", "aria-label": `Open bugs in ${card.id}` }) : null,
           h("a", { href: url("enter_bug.cgi", { product: name, component: card.id }), text: "File a bug", "aria-label": `File a bug in ${card.id}` }));
         changes.insert(quick, footer ?? card, footer?.firstChild ?? null);
-
-        const description = $("p.description", card);
-        if (description) {
-          const more = h("button", { type: "button", class: "pb-dc-more", text: "Show more", hidden: true, "aria-expanded": "false" });
-          changes.insert(more, description.parentNode, description.nextSibling);
-          changes.listen(more, "click", () => {
-            const expanded = more.getAttribute("aria-expanded") !== "true";
-            more.setAttribute("aria-expanded", String(expanded));
-            more.textContent = expanded ? "Show less" : "Show more";
-          });
-          clamps.set(description, more);
-          measure.observe(description);
-        }
       }
       changes.defer(() => {
         for (const card of cards) card.hidden = false;
